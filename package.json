@@ -1,0 +1,38 @@
+{
+  "name": "solid-rock",
+  "version": "0.1.0",
+  "description": "Solid Rock Dublin mobile app, church office and event registration backend.",
+  "scripts": {
+    "test": "node --test supabase/tests/*.test.mjs",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build:admin": "npm run build -w @solid-rock/admin",
+    "dev:admin": "npm run dev -w @solid-rock/admin",
+    "dev:mobile": "npm run start -w @solid-rock/mobile",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:ui": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Melvinjayson/Solid-Rock.git"
+  },
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.14",
+    "@playwright/test": "1.56.1",
+    "@types/node": "24.10.0",
+    "@types/react": "19.2.2",
+    "prettier": "3.6.2",
+    "supabase": "2.122.0",
+    "typescript": "5.9.3"
+  },
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22 <25"
+  }
+}
