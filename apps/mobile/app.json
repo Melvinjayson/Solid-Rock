@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Solid Rock Dublin \u2014 Development",
+    "slug": "solid-rock-dublin-dev",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "org.solidrockdublin.development"
+    },
+    "android": {
+      "package": "org.solidrockdublin.development"
+    }
+  }
+}
