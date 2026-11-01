@@ -1,73 +1,203 @@
-# Solid Rock Dublin
+# Solid Rock Centre — Digital Church Platform
 
-Development implementation of the event registration workflow. Independent of the archived Liberty prototype. No production deployment or store update has been performed.
+> **Project status: Event foundation implemented and locally tested for review.** This repository includes a development Expo app, Next.js church office, and PostgreSQL event-registration schema. No production app or backend deployment is claimed. See [development setup](docs/DEVELOPMENT.md) and [verification evidence](docs/EVENT_FOUNDATION.md).
 
-## Implemented
+Solid Rock is a proposed modernisation of the existing Solid Rock Centre church mobile application for **Android and iOS**, bringing worship, discipleship, community engagement, events, giving, pastoral support and church administration into one accessible digital experience.
 
-- Expo / React Native: guest-first Home, Events and account sign-in; event registration, persisted reference and cancellation. Watch and Give currently link to the official church website.
-- Next.js church office: staff sign-in, create draft/published events, publish, cancel and inspect registration account IDs/status. Names and ChMeetings member linking are deferred.
-- Supabase PostgreSQL: RLS, protected staff records, transactional capacity checks, idempotent registration, cancellation and audit events. Confirmation is an in-app database record; email and push delivery are not implemented.
-- SQL integration tests execute the migration in PGlite (embedded PostgreSQL) with separate guest/member/staff roles. This does not replace hosted Supabase or concurrent multi-connection testing.
+The goal is to provide a welcoming public experience for visitors and a trusted, personalised service for church members, ministry leaders, pastors and administrators. The initiative is intended to evolve the existing app, not to disrupt active church operations or abandon existing member records.
 
-## Local setup
+- Church website: https://solidrockdublin.org/
+- Existing Android listing: https://play.google.com/store/apps/details?id=com.jiosdev.chmeetings.solidrockdublin
+- Related architecture reference: [Liberty-TV](https://github.com/Melvinjayson/liberty-tv) (private, archived)
+- [Implementation roadmap](docs/IMPLEMENTATION_ROADMAP.md)
+- [Development setup and commands](docs/DEVELOPMENT.md)
+- [Implementation verification and release gates](docs/EVENT_FOUNDATION.md)
 
-Node 24 and npm. From the repository root:
+## Vision
 
-```sh
-npm ci
-npm test
-npm run typecheck
-npm run dev:admin
-npm run dev:mobile
-```
+**One connected digital home for worship, community and service.**
 
-Copy `apps/admin/.env.example` to `apps/admin/.env.local` and `apps/mobile/.env.example` to `apps/mobile/.env`. Fill only the URL and publishable key for an **approved development Supabase project**. Never put service-role keys in either application. Rebuild/restart after changing public variables.
+The app should help people discover Solid Rock, follow live services and sermons, engage with Scripture, register for events, join fellowships, request prayer or pastoral support, participate in ministries and give securely. Church staff should have a separate administration portal for content, membership, events, communications, finance reconciliation and access governance.
 
-Review and apply `supabase/migrations/*_event_registration.sql` through the approved database migration process in that development project. Do not apply it to ChMeetings or an existing production database. Only `public` should be exposed through the Data API; **do not expose `private`**. Explicit grants and RLS are included.
+### Product principles
 
-Create confirmed test email/password users through Supabase Auth. There is no public sign-up or password-recovery UI in this increment. Test identities are not automatically ChMeetings members. Disable anonymous sign-in. Configure Auth rate limits and email verification before a pilot.
+1. **Public-first:** Visitors can discover services, sermons, public events and Scripture without mandatory registration.
+2. **Member-centred:** Authenticated experiences make participation easier without exposing private church records.
+3. **Accessible and inclusive:** Design for varied ages, abilities, devices and connectivity.
+4. **Privacy and safeguarding by design:** Protect religious-affiliation data, minors' information, pastoral records and giving history.
+5. **Operational continuity:** Validate ChMeetings data and publisher migration before replacing existing workflows.
+6. **Church-controlled:** The church governs content, permissions, financial destinations and member data.
+7. **Modular delivery:** Ship useful journeys before advanced personalisation or AI.
 
-A database administrator grants one initial staff account using its actual Auth UUID:
+## Who the platform serves
 
-```sql
-insert into public.staff_roles(user_id, role)
-values ('REPLACE_WITH_CONFIRMED_AUTH_USER_UUID', 'events');
-```
+| Audience             | Needs                                                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Visitor              | Find the church, service details, livestreams, sermons, public events and contact information                     |
+| Member               | Manage profile, follow sermons, register for events, join groups, access giving history and receive announcements |
+| Ministry volunteer   | Discover opportunities, register interest, view approved ministry assignments                                     |
+| Group leader         | Coordinate fellowship membership and approved group activities                                                    |
+| Pastor / care team   | Manage confidential appointments and prayer or care requests within explicit permissions                          |
+| Finance team         | Verify giving destinations, reconcile payments, issue statements and review audit records                         |
+| Church administrator | Publish content, manage events, notifications, roles and operational settings                                     |
 
-This is an access change requiring the church owner's approval. Clients cannot grant roles. Remove that record to revoke event-office privileges immediately.
+## Proposed mobile navigation
 
-## Exercise the complete workflow
+**Home · Watch · Events · Give · More**
 
-1. Staff signs into the office and saves a future event as draft. A guest cannot see it.
-2. Staff publishes it. Refresh Events on mobile to see it.
-3. A confirmed test account signs in under More, returns to Events and reserves a place.
-4. The app displays the stored registration reference. Refresh or relaunch to retrieve it again.
-5. Staff opens registrations to see the account ID and confirmation status.
-6. Retry registration: the same reference is returned. Fill capacity: the next user is rejected.
-7. Cancel a place: its confirmation is removed and capacity becomes available.
+- **Home:** Service information, personalised welcome, announcements, upcoming events, quick actions and recent sermons.
+- **Watch:** Livestreams, sermon archive, series, search, playback and Scripture references.
+- **Events:** Church calendar, event details, registration, reminders and later QR check-in.
+- **Give:** Verified giving funds, donation guidance and later secure online giving, receipts and statements.
+- **More:** Bible, fellowships, ministries, prayer requests, pastoral appointments, profile, family and preferences.
 
-Dates are stored as UTC and displayed in Europe/Dublin. Office datetime inputs use the browser's local timezone, labelled in the form. Event cancellation stops new registrations; contacting existing attendees is currently a manual office task.
+A separate **Next.js administration portal** is planned for church staff. Financial and pastoral permissions must be narrower than a general administrator role.
 
-## Checks
+## Feature delivery priorities
 
-```sh
-npm run format:check
-npm test
-npm run typecheck
-npm run build:admin
-npm run test:ui
-cd apps/mobile
-npx expo export --platform all
-```
+### Launch baseline (P0)
 
-For browser tests, first install Chromium with `npx playwright install chromium`. Browser tests use mocked Supabase HTTP responses for the staff workflow and the exported mobile web shell for guest navigation; they do not contact a hosted project. Run the mobile export before browser tests. Database tests exercise actual SQL/RLS with a minimal Auth fixture; hosted Auth/PostgREST and native device journeys remain release gates.
+- Guest browsing and accessible navigation
+- Sign-in, account recovery, member linking and role-based access
+- Home content, service details, announcements and notifications
+- Livestream and searchable sermon archive
+- Bible reading with verified content rights
+- Events calendar and free registration
+- Prayer request submission with confidential handling
+- Verified giving instructions and categories
+- Administrative publishing, event management, access controls and audit trails
 
-## Boundaries
+### First expansion (P1)
 
-- No payment collection, sample bank details, email/push sending, external account writes, production migration or app-store submission.
-- No ChMeetings connector, member import, member verification, family management, pastoral care or AI services.
-- Development bundle identifiers deliberately differ from existing store listings. Confirm publisher authority and signing/transfer arrangements before release configuration changes.
-- Auth session persistence uses the standard Supabase browser / React Native AsyncStorage approach; native secure storage and staff MFA need a pilot security review.
-- No real church event data is seeded. Church address, service time and links are based on the public website, reviewed 1 November 2026; obtain church approval before launch.
+- Household profiles and fellowship groups
+- Sermon notes, audio, captions and bookmarks
+- Devotionals and reading plans
+- Volunteering and ministry interest
+- Paid events, check-in and reminders
+- Pastoral appointment scheduling
+- Secure payments, reconciliation, giving history and statements
+- Administrative forms, volunteer rosters and care workflows
 
-See [implementation status](docs/EVENT_FOUNDATION.md) and the existing [roadmap](docs/IMPLEMENTATION_ROADMAP.md).
+### Future exploration (P2)
+
+- Offline media and advanced search
+- Group communication and waitlists
+- Recurring donations
+- Carefully governed AI-assisted sermon and Scripture discovery
+- Advanced analytics and content recommendations
+
+Features above describe the broader **proposed** product. The implemented development subset is event publishing, account sign-in, registration, in-app confirmation and cancellation; see [verification evidence](docs/EVENT_FOUNDATION.md) for boundaries.
+
+## Technical architecture
+
+The recommended architecture selectively adapts reusable components from Liberty-TV while keeping Solid Rock operationally and legally independent.
+
+| Layer         | Proposed technology                                                      | Purpose                                                  |
+| ------------- | ------------------------------------------------------------------------ | -------------------------------------------------------- |
+| Mobile        | Expo, React Native, TypeScript                                           | Shared Android and iOS application                       |
+| Admin         | Next.js, TypeScript                                                      | Staff and ministry operations                            |
+| Identity      | Supabase Auth                                                            | Authentication, member linking and roles                 |
+| Data          | PostgreSQL with row-level security                                       | Church domain data                                       |
+| API           | Validated server-side domain services                                    | Permissions and business logic                           |
+| Media         | Existing church streaming provider first; Liberty components after audit | Livestreams, sermon catalogue and optional transcription |
+| Scripture     | Adapted Liberty Scripture module after rights/quality checks             | Bible reading and references                             |
+| Notifications | Expo Notifications / APNs / FCM                                          | Announcements and reminders                              |
+| Payments      | Approved regulated provider and verified webhooks                        | Giving and reconciliation                                |
+| Integrations  | ChMeetings, church website, approved content sources                     | Migration and content synchronisation                    |
+| Operations    | CI/CD, monitoring, audit and backup processes                            | Reliable releases                                        |
+
+### Liberty-TV reuse strategy
+
+Liberty-TV declares a pnpm/Turborepo workspace with an Expo mobile app, Next.js web app, shared TypeScript packages, Scripture and content-pipeline packages, FastAPI AI services, real-time services and AWS infrastructure. Its mobile authentication gate currently directs unauthenticated users to login; Solid Rock requires public-first routing.
+
+**Reuse after inspection:** mobile conventions, Supabase integration patterns, shared sermon/Scripture types and verified content utilities.
+
+**Adapt:** navigation, design system, onboarding, media ingestion and administration.
+
+**Build specifically for Solid Rock:** membership domain, church events, fellowship workflows, pastoral care, giving ledger, payment reconciliation, permissions and ChMeetings integration.
+
+**Defer:** Neo4j Soul Graph, autonomous spiritual guidance, watch parties and large-scale multi-agent infrastructure. Do not feed confidential pastoral or giving records into public-content AI pipelines.
+
+Existing manifests declare Expo 52 and Next.js 14; upgrade compatibility and security must be assessed before production adoption. Declared dependencies and documentation are not proof of working production capabilities.
+
+## Conceptual data domains
+
+- **Identity:** users, profiles, households, roles, consents
+- **Church:** campuses, service schedules, ministries, announcements
+- **Media:** sermons, series, assets, notes, playback progress
+- **Community:** fellowships, memberships, volunteer opportunities
+- **Events:** events, registrations, tickets, check-ins
+- **Pastoral care:** appointments, prayer requests, confidential cases
+- **Finance:** funds, destinations, transactions, allocations, reconciliation, statements
+- **Operations:** notifications, integration jobs, audit events
+
+Sensitive records require least-privilege authorisation, encryption, appropriate retention policies and audited administrative access.
+
+## Implementation roadmap
+
+| Period      | Workstream               | Deliverable                                                                              |
+| ----------- | ------------------------ | ---------------------------------------------------------------------------------------- |
+| Weeks 1–2   | Discovery and governance | App publisher ownership, ChMeetings integration, Liberty audit, confirmed church content |
+| Weeks 3–5   | Foundation               | Expo scaffold, design system, Supabase, domain contracts, CI/CD                          |
+| Weeks 6–10  | Member experience        | Home, Watch, Bible, Events, guest-first navigation                                       |
+| Weeks 9–13  | Administration           | Content publishing, event operations, notifications, roles                               |
+| Weeks 12–17 | Integrated services      | Giving, pastoral care, forms, fellowships                                                |
+| Weeks 18–21 | Validation               | Migration rehearsal, security, accessibility, device QA and beta                         |
+| Weeks 22–24 | Release                  | Store submissions, staged rollout, monitoring and support                                |
+
+This is an **indicative 24-week plan**, dependent on staffing, integration access and app-store ownership. Scope and dates must be re-estimated after discovery.
+
+### Release gates
+
+- **G0:** Ownership and migration feasibility approved.
+- **G1:** Architecture and design foundation accepted.
+- **G2:** Core user journeys work with verified church content.
+- **G3:** Operational workflows pass end-to-end tests.
+- **G4:** Privacy, safeguarding, security, accessibility and beta sign-off.
+- **G5:** Production rollout and monitoring are operational.
+
+## Critical dependencies and decisions
+
+1. **Existing app:** Confirm Android/iOS publisher accounts, signing credentials, app identifiers and ChMeetings contractual/data-export options.
+2. **Church content:** Confirm service address, times, ministries and contact details against authorised church sources. Prototype sample data must never be published as fact.
+3. **Payments:** Independently verify all recipient accounts, fund routing and financial approval before accepting payments.
+4. **Data protection:** Address GDPR special-category religious data, consent, access, deletion and retention.
+5. **Safeguarding:** Design permissions for minors, families, pastoral requests and sensitive submissions.
+6. **Content rights:** Verify Bible translation, sermon, music, image and streaming permissions.
+7. **Technical readiness:** Audit actual Liberty source, tests, vulnerabilities and deployment dependencies.
+8. **Operational ownership:** Assign church product, pastoral, finance, content and incident-response owners.
+
+## Initial engineering backlog
+
+| ID     | Work item                                                      |
+| ------ | -------------------------------------------------------------- |
+| SR-001 | File-by-file Liberty architecture and test audit               |
+| SR-002 | ChMeetings, app-store and member-data migration assessment     |
+| SR-003 | Church domain contracts, permissions and data model            |
+| SR-004 | Mobile/admin scaffolding and development environments          |
+| SR-005 | Public-first routing and five-tab navigation                   |
+| SR-006 | Official content and sermon media integration                  |
+| SR-007 | End-to-end event registration vertical slice                   |
+| SR-008 | Secure member identity linking and profile                     |
+| SR-009 | Admin publishing and notifications                             |
+| SR-010 | Giving/payment ledger and reconciliation design                |
+| SR-011 | Confidential pastoral scheduling workflow                      |
+| SR-012 | Automated tests, security/privacy reviews and release pipeline |
+
+## Quality targets (proposed)
+
+- 99.5% API availability
+- At least 99% crash-free beta sessions
+- Zero unresolved critical security findings at launch
+- 100% independent verification of published payment destinations
+- Accessible navigation, readable typography and screen-reader support
+
+These are **targets**, not observed performance.
+
+## Project status and next action
+
+**Current state:** The first event workflow is implemented for review. Local SQL/RLS, browser and build checks pass; hosted Supabase, physical-device and independent-connection concurrency validation remain outstanding. This is not a production release.
+
+**Next step:** Select the approved development Supabase project, apply the reviewed migration, provision test identities and verify the event workflow against hosted Auth/PostgREST and physical devices. Confirm existing app ownership and ChMeetings integration before production migration. Follow [development setup](docs/DEVELOPMENT.md).
+
+For full implementation scope, risks and milestones, see [docs/IMPLEMENTATION_ROADMAP.md](docs/IMPLEMENTATION_ROADMAP.md).
