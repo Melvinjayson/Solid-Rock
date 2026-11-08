@@ -157,7 +157,7 @@ test('Preferences provides true black default, light toggle and readable Bible s
  await page.reload();
  await page.getByRole('tab',{name:'More'}).click();
  await page.getByRole('button',{name:/^Preferences/}).click();
- await expect(page.getByRole('button',{name:'Extra large'})).toHaveAttribute('aria-selected','true');
+ await expect(page.getByRole('radio',{name:'Extra large'})).toHaveAttribute('aria-checked','true');
 });
 test('Bible reads actual public-domain chapter and proposes church study share',async ({page})=>{
  await page.route('https://bible-api.com/data/web/JHN/3',route=>route.fulfill({
