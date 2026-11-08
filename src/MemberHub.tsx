@@ -104,7 +104,7 @@ export default function MemberHub() {
     if(!target){Alert.alert('Enter a valid email address');return;}
     if(!churchDb){Alert.alert('Not configured','Membership sign-in requires the church Supabase project.');return;}
     await run(async()=>{
-      const {error:e}=await churchDb!.auth.signInWithOtp({email:target,options:{shouldCreateUser:true}});
+      const {error:e}=await churchDb!.auth.signInWithOtp({email:target,options:{shouldCreateUser:process.env.EXPO_PUBLIC_MEMBER_SIGNUP_ENABLED==='true'}});
       if(e)throw e;
     },'Check your email for your sign-in code. The Supabase email template must be configured to send a six-digit OTP.');
   }
