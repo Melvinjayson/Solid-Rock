@@ -46,8 +46,8 @@ export default function PreferencesScreen({mode,setMode,prefs,setPrefs,onAccount
   <Text style={styles.intro}>Keep the experience comfortable for every age and stage of life. Settings are saved on your device.</Text>
   <Text style={styles.section}>APPEARANCE</Text>
   <View style={styles.row}>
-   {(['dark','light'] as const).map(option=><Pressable key={option} accessibilityRole="button"
-      accessibilityState={{selected:mode===option}} style={[styles.choice,mode===option&&styles.selected]} onPress={()=>setMode(option)}>
+   {(['dark','light'] as const).map(option=><Pressable key={option} accessibilityRole="radio"
+      accessibilityState={{checked:mode===option}} style={[styles.choice,mode===option&&styles.selected]} onPress={()=>setMode(option)}>
       <AppIcon name={option==='dark'?'moon':'sun'} color={mode===option?'#16110A':T.gold} size={21}/>
       <Text style={[styles.choiceText,mode===option&&{color:'#16110A'}]}>{option==='dark'?'Black / dark':'Light / ivory'}</Text>
    </Pressable>)}
@@ -55,7 +55,7 @@ export default function PreferencesScreen({mode,setMode,prefs,setPrefs,onAccount
   <Text style={styles.section}>READING COMFORT</Text>
   <View style={styles.card}><Text style={styles.cardTitle}>Scripture text size</Text><Text style={styles.intro}>Choose a size that is comfortable for reading Bible chapters.</Text>
    <View style={styles.row}>{([{size:1,label:'Standard'},{size:1.15,label:'Large'},{size:1.3,label:'Extra large'}] as const).map(x=>
-     <Pressable key={x.size} accessibilityRole="button" accessibilityState={{selected:prefs.fontScale===x.size}}
+     <Pressable key={x.size} accessibilityRole="radio" accessibilityState={{checked:prefs.fontScale===x.size}}
        style={[styles.option,prefs.fontScale===x.size&&styles.optionSelected]} onPress={()=>change({fontScale:x.size})}>
        <Text style={[styles.optionText,prefs.fontScale===x.size&&{color:'#16110A'}]}>{x.label}</Text>
      </Pressable>)}</View>
