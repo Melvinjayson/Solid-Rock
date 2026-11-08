@@ -176,7 +176,7 @@ function AppContent() {
   return <SafeAreaView style={s.safe} edges={['top', 'bottom']}><StatusBar barStyle="dark-content" backgroundColor={T.white}/>
     <Header onAbout={() => goPage('About')}/>
     {loading ? <View style={s.loading}><ActivityIndicator color={T.brand}/></View> : <>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.scrollContent, { width: contentWidth, alignSelf: 'center' }]}>{page ? <Detail/> : tab === 'Home' ? <Home/> : tab === 'Watch' ? <Watch/> : tab === 'Events' ? <Events/> : tab === 'Give' ? <Give/> : <More/>}</ScrollView>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.scrollContent, { width: contentWidth, alignSelf: 'center' }]}>{page ? Detail() : tab === 'Home' ? Home() : tab === 'Watch' ? Watch() : tab === 'Events' ? Events() : tab === 'Give' ? Give() : More()}</ScrollView>
       <View style={s.tabBar}>{tabs.map(t => <Pressable key={t.name} accessibilityRole="tab" accessibilityState={{ selected: tab === t.name && !page }} accessibilityLabel={t.name} onPress={() => goTab(t.name)} style={s.tab}>
         <Text style={[s.tabIcon, tab === t.name && !page && s.active]}>{t.icon}</Text><Text style={[s.tabText, tab === t.name && !page && s.active]}>{t.name}</Text></Pressable>)}</View>
     </>}
@@ -198,21 +198,21 @@ const s = StyleSheet.create({
   heroCopy: { color: T.muted, fontSize: 15, lineHeight: 23 },
   button: { alignItems: 'center', justifyContent: 'center', backgroundColor: T.brand, borderRadius: 13, minHeight: 48, paddingHorizontal: 18, paddingVertical: 12, marginTop: 6 },
   buttonOutline: { backgroundColor: T.white, borderWidth: 1, borderColor: T.border },
-  buttonText: { color: T.white, fontWeight: '750', fontSize: 14 },
+  buttonText: { color: T.white, fontWeight: '700', fontSize: 14 },
   quickRow: { flexDirection: 'row', gap: 10 },
   quick: { flex: 1, paddingVertical: 18, paddingHorizontal: 11, backgroundColor: T.white, borderWidth: 1, borderColor: T.border, borderRadius: 17, minWidth: 0 },
   quickIcon: { fontSize: 22, color: T.blue, marginBottom: 8 },
   quickTitle: { fontSize: 14, fontWeight: '800', color: T.ink },
   quickMeta: { color: T.muted, fontSize: 10, marginTop: 4 },
   headingRow: { marginTop: 12, marginBottom: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  heading: { color: T.ink, fontWeight: '850', fontSize: 21, letterSpacing: -0.5 },
-  action: { color: T.blue, fontSize: 13, fontWeight: '750', paddingVertical: 6 },
+  heading: { color: T.ink, fontWeight: '800', fontSize: 21, letterSpacing: -0.5 },
+  action: { color: T.blue, fontSize: 13, fontWeight: '700', paddingVertical: 6 },
   surface: { backgroundColor: T.white, borderWidth: 1, borderColor: T.border, borderRadius: 19, padding: 19, gap: 10 },
   tag: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#DFE8F9' },
-  tagText: { color: T.brand, fontSize: 10, fontWeight: '850', letterSpacing: 0.75 },
-  cardTitle: { color: T.ink, fontSize: 20, fontWeight: '850', lineHeight: 26, letterSpacing: -0.4 },
+  tagText: { color: T.brand, fontSize: 10, fontWeight: '800', letterSpacing: 0.75 },
+  cardTitle: { color: T.ink, fontSize: 20, fontWeight: '800', lineHeight: 26, letterSpacing: -0.4 },
   body: { color: T.muted, fontSize: 14, lineHeight: 22 },
-  kicker: { color: T.blue, fontSize: 10, fontWeight: '850', letterSpacing: 1 },
+  kicker: { color: T.blue, fontSize: 10, fontWeight: '800', letterSpacing: 1 },
   meta: { color: T.ink, fontWeight: '600', fontSize: 12 },
   pageTitle: { color: T.ink, fontSize: 30, fontWeight: '900', letterSpacing: -0.8 },
   pageIntro: { color: T.muted, lineHeight: 22, fontSize: 15, marginBottom: 4 },
@@ -224,10 +224,10 @@ const s = StyleSheet.create({
   disclaimer: { fontSize: 12, color: T.muted, lineHeight: 19, marginTop: 7 },
   dateBox: { width: 63, borderRadius: 13, backgroundColor: T.pale, paddingVertical: 12, alignItems: 'center', gap: 5 },
   dateTop: { color: T.blue, fontWeight: '900', fontSize: 12 },
-  dateBottom: { color: T.ink, fontWeight: '750', fontSize: 10 },
+  dateBottom: { color: T.ink, fontWeight: '700', fontSize: 10 },
   scripture: { borderRadius: 18, borderLeftWidth: 4, borderLeftColor: T.gold, backgroundColor: T.pale, padding: 23, gap: 8 },
-  scriptureText: { color: T.ink, fontSize: 20, fontWeight: '750', lineHeight: 29 },
-  scriptureRef: { color: T.blue, fontSize: 12, fontWeight: '750' },
+  scriptureText: { color: T.ink, fontSize: 20, fontWeight: '700', lineHeight: 29 },
+  scriptureRef: { color: T.blue, fontSize: 12, fontWeight: '700' },
   menuRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: T.border, borderRadius: 16, padding: 18, gap: 12 },
   menuTitle: { fontSize: 16, fontWeight: '800', color: T.ink },
   menuDesc: { color: T.muted, marginTop: 4, fontSize: 12, lineHeight: 18 },
