@@ -304,7 +304,7 @@ function AppContent() {
           <PrimaryButton label="Talk privately to the church" onPress={()=>goPage('Talk to us')}/><Text style={s.disclaimer}>Do not enter urgent or highly sensitive information here. For immediate danger, contact local emergency services.</Text></Surface></>}
       {page === 'Groups' && <><Text style={s.pageIntro}>Find a place to learn, serve and meet people across cultures and generations.</Text>
         {MINISTRIES.map(m=><Surface key={m.name}><MinistryImage asset={m.image} name={m.name}/><Text style={s.cardTitle}>{m.name}</Text><Text style={s.body}>{m.detail}</Text><PrimaryButton label="Ask about this ministry" onPress={()=>goPage('Talk to us')}/></Surface>)}
-        <PrimaryButton label="Explore conversations" onPress={()=>goTab('Community')}/></>} }
+        <PrimaryButton label="Explore conversations" onPress={()=>goTab('Community')}/></>}
       {page === 'About' && <><Text style={s.pageIntro}>Loving God, loving others and serving the world.</Text>
         <Surface><Tag>PLAN YOUR VISIT</Tag><Text style={s.cardTitle}>{CHURCH_NAME}</Text><Text style={s.body}>{SUNDAY_SERVICE}</Text><Text style={s.body}>{CONTACT_ADDRESS}</Text>
           <PrimaryButton label="Plan your visit  ↗" onPress={()=>{void Linking.openURL(VISIT_URL);}}/>
