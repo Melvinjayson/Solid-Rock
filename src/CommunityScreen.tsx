@@ -4,7 +4,7 @@ import {churchDb,cloudEnabled} from './backend';
 import AppIcon,{type IconName} from './AppIcon';
 import {theme as T} from './theme';
 import {COMMUNITY_PREVIEW,listChannels,getMyChannelMemberships,getMessages,joinChannel,leaveChannel,sendMessage,reportMessage,blockMember,listenToMessages,
- type CommunityChannel,type CommunityMessage,type ChannelKind} from './community';
+ type CommunityChannel,type CommunityMessage,type ChannelKind,sendReply,togglePrayerSupport,getPrayerSupportCounts} from './community';
 
 type Props={onAccount:()=>void;onVisit:()=>void};
 const kindIcon:Record<ChannelKind,IconName>={announcements:'bell',discussion:'chat',prayer:'prayer',study:'book'};
@@ -26,6 +26,8 @@ export default function CommunityScreen({onAccount,onVisit}:Props){
  const [user,setUser]=useState<string|null>(null);
  const [error,setError]=useState('');
  const [consent,setConsent]=useState(false);
+ const [replyTo,setReplyTo]=useState<string|null>(null);
+ const [prayerCounts,setPrayerCounts]=useState<Record<string,number>>({});
  const [filter,setFilter]=useState<'all'|'prayer'|'discussion'|'study'>('all');
  const styles=makeStyles();
  const active=channels.find(x=>x.id===current)||null;
@@ -50,9 +52,9 @@ export default function CommunityScreen({onAccount,onVisit}:Props){
  const refreshMessages=useCallback(async(id:string)=>{
   try{setMessages(await getMessages(id));setError('');}
   catch(e){setError(readableError(e));}
- },[]);
+ },[channels]);
  useEffect(()=>{
-   setMessages([]);setText('');
+   setMessages([]);setReplyTo(null);setText('');
    if(!current||!membership.includes(current))return;
    void refreshMessages(current);
    return listenToMessages(current,()=>{void refreshMessages(current);});
@@ -77,7 +79,7 @@ export default function CommunityScreen({onAccount,onVisit}:Props){
  async function post(){
   if(!active||!text.trim()||!joined)return;
   const draft=text.trim();
-  await act(async()=>{await sendMessage(active.id,draft);setText('');await refreshMessages(active.id);});
+  await act(async()=>{if(replyTo)await sendReply(active.id,replyTo,draft);else await sendMessage(active.id,draft);setText('');setReplyTo(null);await refreshMessages(active.id);});
  }
  function report(m:CommunityMessage){
   Alert.alert('Keep this space safe','Flag a message for the church moderation team.',[
@@ -173,7 +175,14 @@ export default function CommunityScreen({onAccount,onVisit}:Props){
            <Text style={styles.author}>{m.author_id===user?'You':'Community member'}</Text>
            <Text style={styles.time}>{time(m.created_at)}</Text>
          </View>
+         {m.reply_to_id&&<View style={styles.replyPreview}><AppIcon name="chat" size={13} color={T.gold}/><Text style={styles.replyText}>Replying to {messages.find(x=>x.id===m.reply_to_id)?.author_id===user?'you':'a member'}</Text></View>}
          <Text style={styles.messageText}>{m.hidden_at?'Message hidden by moderator':m.body}</Text>
+         {!m.hidden_at&&<View style={styles.actions}>
+           {active.kind!=='announcements'&&<Pressable accessibilityRole="button" accessibilityLabel={'Reply to '+(m.author_id===user?'your message':'member message')} onPress={()=>setReplyTo(m.id)}><Text style={styles.smallAction}>Reply</Text></Pressable>}
+           {active.kind==='prayer'&&<Pressable accessibilityRole="button" accessibilityLabel="Pray with this member" onPress={()=>{void act(async()=>{await togglePrayerSupport(m.id);await refreshMessages(active.id);});}} style={{flexDirection:'row',gap:5,alignItems:'center'}}>
+             <AppIcon name="prayer" size={15} color={T.gold}/><Text style={styles.smallAction}>Praying · {prayerCounts[m.id]||0}</Text>
+           </Pressable>}
+         </View>}
          {m.author_id!==user&&<View style={styles.actions}>
            <Pressable accessibilityRole="button" onPress={()=>report(m)}><Text style={styles.smallAction}>Report</Text></Pressable>
            <Pressable accessibilityRole="button" onPress={()=>block(m)}><Text style={styles.smallAction}>Block</Text></Pressable>
@@ -181,12 +190,14 @@ export default function CommunityScreen({onAccount,onVisit}:Props){
        </View>)}
      </View>}
      {active.kind==='announcements'?<Text style={styles.guidelineText}>Only authorised church staff can publish announcements here.</Text>:
-       <View style={styles.composer}><TextInput multiline maxLength={2000} accessibilityLabel={'Message to '+active.title}
+       <View style={{gap:8}}>{replyTo&&<Pressable accessibilityRole="button" style={styles.replying} onPress={()=>setReplyTo(null)}>
+          <AppIcon name="chat" size={15} color={T.gold}/><Text style={styles.replyText}>Replying to a message · Tap to cancel</Text><AppIcon name="close" size={15} color={T.muted}/>
+        </Pressable>}<View style={styles.composer}><TextInput multiline maxLength={2000} accessibilityLabel={'Message to '+active.title}
            placeholder={active.kind==='prayer'?'Write encouragement or a general prayer…':'Share a thought with the group…'}
            placeholderTextColor={T.muted} style={styles.input} value={text} onChangeText={setText}/>
          <Pressable accessibilityRole="button" accessibilityLabel="Send message" disabled={!text.trim()||busy} onPress={()=>{void post();}}
            style={[styles.send,(!text.trim()||busy)&&{opacity:.4}]}><AppIcon name="send" color="#16110A" size={20}/></Pressable>
-       </View>}
+       </View></View>}
    </>}
    {!!error&&<Text role="alert" style={styles.warning}>{error}</Text>}
    {joined&&<Pressable accessibilityRole="button" style={styles.external} onPress={()=>{if(active)void refreshMessages(active.id);}}>
@@ -232,6 +243,9 @@ function makeStyles(){return StyleSheet.create({
  roomTop:{flexDirection:'row',justifyContent:'space-between'},
  leave:{fontFamily:'Mulish_700Bold',fontSize:12,color:T.gold},
  message:{backgroundColor:T.white,borderRadius:17,borderWidth:1,borderColor:T.border,padding:15,gap:9},
+ replyPreview:{flexDirection:'row',alignItems:'center',gap:6,backgroundColor:T.pale,padding:9,borderRadius:10},
+ replyText:{fontFamily:'Mulish_700Bold',color:T.muted,fontSize:11,flex:1},
+ replying:{flexDirection:'row',alignItems:'center',gap:9,backgroundColor:T.pale,padding:12,borderRadius:12},
  myMessage:{backgroundColor:T.pale},
  messageHeading:{flexDirection:'row',alignItems:'center',gap:8},
  avatar:{height:28,width:28,borderRadius:14,alignItems:'center',justifyContent:'center',backgroundColor:T.pale},
