@@ -133,11 +133,24 @@ export default function MemberHub() {
     }catch(e){setError(safeMessage(e));}finally{setBusy(false);}
   }
   function mustSignIn(){Alert.alert('Member sign-in required','Open the Account section to sign in first.');setSection('Account');}
-  async function handleRegistration(event:ChurchEvent){
+  async function handleRegistration(event:ChurchEvent,allowWaitlist=false){
     if(!userId){mustSignIn();return;}
-    if(await run(()=>requestEventRegistration(event.id),'Registration confirmed by the church service.')) {
+    setBusy(true);
+    try{
+      const status=await requestEventRegistration(event.id,allowWaitlist);
       await loadPrivate();
-    }
+      Alert.alert(status==='registered'?'Registration confirmed':'Added to waitlist',
+        status==='registered'?'Your place is registered. Keep your check-in reference for church staff.':
+          'You are on the waitlist. Places are released in order when registered attendees cancel. This is not a confirmed event ticket.');
+    }catch(e){
+      const msg=safeMessage(e);
+      if(!allowWaitlist&&/full|waitlist/i.test(msg)){
+        Alert.alert('This event is full','Would you like to join the waitlist? A waitlist place is not a confirmed registration.',[
+          {text:'Not now',style:'cancel'},
+          {text:'Join waitlist',onPress:()=>{void handleRegistration(event,true);}}
+        ]);
+      }else Alert.alert('Unable to register',msg);
+    }finally{setBusy(false);}
   }
   async function handleJoin(group:ChurchGroup){
     if(!userId){mustSignIn();return;}
@@ -184,9 +197,14 @@ export default function MemberHub() {
     {section==='Events' && <Card title="Upcoming events">
       {data.events.length ? data.events.map((e:ChurchEvent)=><View key={e.id} style={styles.item}>
         <Text style={styles.itemTitle}>{e.title}</Text><Info>{fmt(e.starts_at)}{e.venue?' · '+e.venue:''}</Info><Info>{e.description}</Info>
-        {e.registration_enabled&&<CTA title={registrations.some(r=>r.event_id===e.id&&r.status==='registered')?'Registered':'Register for event'} onPress={()=>void handleRegistration(e)} disabled={busy||registrations.some(r=>r.event_id===e.id&&r.status==='registered')}/>}
+        {e.registration_enabled&&<CTA title={registrations.some(r=>r.event_id===e.id&&r.status==='registered')?'Registered':registrations.some(r=>r.event_id===e.id&&r.status==='waitlisted')?'On waitlist':'Register for event'} onPress={()=>void handleRegistration(e)} disabled={busy||registrations.some(r=>r.event_id===e.id&&['registered','waitlisted'].includes(r.status))}/>}
       </View>) : <Info>No verified events are available from the church backend. For confirmed events, use the official website.</Info>}
-      {userId&&<><Text style={styles.cardTitle}>My event registrations</Text>{registrations.filter(x=>x.status==='registered').map(r=><View key={r.id} style={styles.item}><Text style={styles.itemTitle}>{data.events.find(e=>e.id===r.event_id)?.title||'Registered event'}</Text><CTA title="Cancel my registration" onPress={()=>void run(async()=>{await cancelEventRegistration(r.id);await loadPrivate();},'Registration cancelled.')} disabled={busy}/></View>)}</>}
+      {userId&&<><Text style={styles.cardTitle}>My event registrations</Text>{registrations.filter(x=>x.status==='registered'||x.status==='waitlisted').map(r=><View key={r.id} style={styles.item}>
+          <Text style={styles.itemTitle}>{data.events.find(e=>e.id===r.event_id)?.title||'Church event'}</Text>
+          <Info>{r.status==='registered'?'Confirmed registration · show your reference to approved church staff':'Waiting list · place not confirmed'}</Info>
+          {r.status==='registered'&&<Info>Check-in reference: {r.id}</Info>}
+          <CTA title={r.status==='waitlisted'?'Leave waitlist':'Cancel my registration'} onPress={()=>void run(async()=>{await cancelEventRegistration(r.id);await loadPrivate();},'Your place or waitlist request has been cancelled.')} disabled={busy}/>
+        </View>)}</>}
       <CTA title="Official church calendar" onPress={()=>void officialLink()}/>
     </Card>}
     {section==='Community' && <>
