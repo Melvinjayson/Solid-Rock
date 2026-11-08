@@ -421,11 +421,12 @@ function makeStyles(){return StyleSheet.create({
   menuTitle: { fontFamily:'Poppins_700Bold', fontSize: 16, fontWeight: '800', color: T.ink },
   menuDesc: { fontFamily:'Mulish_400Regular', color: T.muted, marginTop: 4, fontSize: 12, lineHeight: 18 },
   chevron: { fontSize: 27, color: T.blue },
-  tabBar: { flexDirection: 'row', paddingTop: 10, paddingBottom: 4, paddingHorizontal: 7, borderTopWidth: 1, borderTopColor: T.border, backgroundColor: T.white },
-  tab: { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 4, minHeight: 53 },
+  tabBar: {flexDirection:'row',paddingTop:8,paddingBottom:8,paddingHorizontal:10,borderTopWidth:1,borderTopColor:T.border,backgroundColor:T.background,gap:3},
+  tab: {flex:1,alignItems:'center',justifyContent:'center',gap:4,paddingVertical:9,minHeight:57,borderRadius:15},
+  tabSelected:{backgroundColor:T.pale},
   tabIcon: { fontSize: 22, color: T.muted, fontWeight: '600' },
-  tabText: { fontFamily:'Mulish_400Regular', fontSize: 10, color: T.muted, fontWeight: '700' },
-  active: { color: T.blue },
+  tabText: {fontFamily:'Mulish_700Bold',fontSize:10,color:T.muted},
+  active: {color:T.gold},
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });}
 s=makeStyles();
