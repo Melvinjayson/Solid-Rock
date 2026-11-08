@@ -2,7 +2,7 @@ import { churchDb } from './backend';
 
 export type ChannelKind='announcements'|'discussion'|'prayer'|'study';
 export type CommunityChannel={id:string;slug:string;title:string;description:string;kind:ChannelKind;is_locked:boolean};
-export type CommunityMessage={id:string;channel_id:string;author_id:string;body:string;created_at:string;hidden_at:string|null};
+export type CommunityMessage={id:string;channel_id:string;author_id:string;body:string;created_at:string;hidden_at:string|null;reply_to_id:string|null};
 export const COMMUNITY_PREVIEW:Omit<CommunityChannel,'id'|'is_locked'>[]=[
  {slug:'church-updates',title:'Church updates',description:'News and pastoral announcements',kind:'announcements'},
  {slug:'prayer-circle',title:'Prayer circle',description:'Pray for and encourage one another',kind:'prayer'},
@@ -29,7 +29,7 @@ export async function leaveChannel(id:string){
 }
 export async function getMessages(id:string):Promise<CommunityMessage[]>{
  const {data,error}=await db().from('community_messages')
-   .select('id,channel_id,author_id,body,created_at,hidden_at')
+   .select('id,channel_id,author_id,body,created_at,hidden_at,reply_to_id')
    .eq('channel_id',id).order('created_at',{ascending:false}).limit(75);
  if(error)throw error;return ((data||[]) as CommunityMessage[]).reverse();
 }
@@ -52,4 +52,20 @@ export function listenToMessages(channelId:string,refresh:()=>void){
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'community_messages',filter:'channel_id=eq.'+channelId},()=>refresh())
    .subscribe();
  return()=>{void client.removeChannel(channel);};
+}
+
+export async function sendReply(channelId:string,parentId:string,body:string){
+ if(!body.trim()||body.length>2000)throw Error('Please use 1–2,000 characters.');
+ const {error}=await db().rpc('community_reply',{p_channel:channelId,p_parent:parentId,p_body:body.trim()});
+ if(error)throw error;
+}
+export async function togglePrayerSupport(messageId:string):Promise<boolean>{
+ const {data,error}=await db().rpc('community_toggle_prayer',{p_message:messageId});
+ if(error)throw error;return Boolean(data);
+}
+export async function getPrayerSupportCounts(channelId:string):Promise<Record<string,number>>{
+ const {data,error}=await db().rpc('community_prayer_counts',{p_channel:channelId});
+ if(error)throw error;
+ return Object.fromEntries(((data||[]) as {message_id:string;support_count:number}[])
+   .map(x=>[x.message_id,Number(x.support_count)]));
 }
