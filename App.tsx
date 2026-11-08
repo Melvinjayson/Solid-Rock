@@ -10,7 +10,8 @@ import JourneyScreen from './src/JourneyScreen';
 import TalkToUsScreen from './src/TalkToUsScreen';
 import SocialConnectScreen from './src/SocialConnectScreen';
 import NotificationsScreen from './src/NotificationsScreen';
-import PreferencesScreen,{loadAppPreferences,APP_PREF_KEY,DEFAULT_APP_PREFERENCES,type AppPreferences} from './src/PreferencesScreen';
+import PreferencesScreen,{loadAppPreferences,DEFAULT_APP_PREFERENCES,type AppPreferences} from './src/PreferencesScreen';
+import {clearSolidRockDeviceData} from './src/localData';
 import {disableReminder} from './src/Reminder';
 import { Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { Mulish_400Regular, Mulish_700Bold } from '@expo-google-fonts/mulish';
@@ -322,13 +323,22 @@ function AppContent() {
           <PrimaryButton label="Call the church  ↗" outline onPress={()=>{void Linking.openURL('tel:+35314549788');}}/></Surface>
       </>}
       {page === 'Privacy' && <><Text style={s.pageIntro}>Your information should be treated with care.</Text>
-        <Surface><Text style={s.cardTitle}>What this preview stores</Text><Text style={s.body}>Saved interests, bookmarks, reading progress and your theme preference may be stored on your device. No payment data is collected in this preview.</Text><Text style={s.body}>Account details, registration, prayer requests and care records require an explicitly configured Solid Rock database. The current public preview is not connected to one.</Text></Surface>
-        <Surface><Text style={s.cardTitle}>Your choices and support</Text><Text style={s.body}>A church-approved privacy notice, deletion workflow and data retention schedule are required before inviting real members to share personal data.</Text><PrimaryButton label="Contact Solid Rock  ↗" onPress={()=>{void Linking.openURL('mailto:admin@solidrockdublin.org');}}/>
-          {!confirmErase?<PrimaryButton label="Clear locally saved preferences" outline onPress={()=>setConfirmErase(true)}/>:
-            <><Text style={s.disclaimer}>This permanently clears local bookmarks, reading progress, saved event interest and appearance preferences on this device. It does not delete any separate church account.</Text>
-            <PrimaryButton label="Yes, clear this device" onPress={()=>{void (async()=>{try{await Promise.all([AsyncStorage.removeItem(STORAGE),AsyncStorage.removeItem('@solidrock:reading-progress:v1'),AsyncStorage.removeItem('@solidrock:theme'),AsyncStorage.removeItem('@solidrock:web-chapters:v1'),AsyncStorage.removeItem('@solidrock:bible-highlights:v1'),AsyncStorage.removeItem('@solidrock:bible-notes:v1'),AsyncStorage.removeItem('@solidrock:updates-read:v1'),AsyncStorage.removeItem(APP_PREF_KEY)]);if(appPrefs.sundayReminderId)await disableReminder(appPrefs.sundayReminderId);setAppPrefs({...DEFAULT_APP_PREFERENCES});setPreferences(EMPTY);setMode('dark');setConfirmErase(false);}catch{Alert.alert('Unable to clear data','Please try again.');}})();}}/>
-            <PrimaryButton label="Keep my saved data" outline onPress={()=>setConfirmErase(false)}/></>}
-</Surface>
+        <Surface><Text style={s.cardTitle}>What is saved on this device</Text><Text style={s.body}>Bible notes and highlights, recently read chapters, saved interests, faith journeys, onboarding choices and notification preferences are stored locally. The app does not collect card details.</Text><Text style={s.body}>Cloud member data, confidential pastoral care and financial records require separate church-operated systems and must not be confused with local storage.</Text></Surface>
+        <Surface><Text style={s.cardTitle}>Manage your information</Text><Text style={s.body}>You can clear the app's device-only information here. If connected to a church member account, this also signs out locally. It does not erase your remote account, donations or legally retained records.</Text>
+          <PrimaryButton label="Contact church data-protection team" outline onPress={()=>{void Linking.openURL('mailto:admin@solidrockdublin.org?subject='+encodeURIComponent('Solid Rock app — privacy and account data request'));}}/>
+          {!confirmErase?<PrimaryButton label="Clear all app data on this device" outline onPress={()=>setConfirmErase(true)}/>:
+            <><Text style={s.disclaimer}>This erases all Solid Rock local preferences, journals, Bible highlights, saved chapters and faith journey progress. Your first-run welcome will return. This cannot be undone; cloud account deletion is a separate process.</Text>
+            <PrimaryButton label="Yes, erase this device's app data" onPress={()=>{void (async()=>{try{
+              if(appPrefs.sundayReminderId)await disableReminder(appPrefs.sundayReminderId);
+              await clearSolidRockDeviceData();
+              setAppPrefs({...DEFAULT_APP_PREFERENCES});setPreferences({interests:[],bookmarks:[]});setMode('dark');setPrayer('');setStudyShare(null);setConfirmErase(false);
+              setPage(null);setTab('Home');setOnboarding('show');
+            }catch(e){Alert.alert('Could not complete device erase',e instanceof Error?e.message:'Please sign out and try again.');}})();}}/>
+            <PrimaryButton label="Keep my data" outline onPress={()=>setConfirmErase(false)}/></>}
+        </Surface>
+        <Surface><Text style={s.cardTitle}>Church account deletion</Text><Text style={s.body}>If you created a member account, you may request its deletion and associated-data review from the church. A fully verified self-service deletion workflow and retention policy must be approved before general member account creation is enabled.</Text>
+          <PrimaryButton label="Request church account deletion" outline onPress={()=>{void Linking.openURL('mailto:admin@solidrockdublin.org?subject='+encodeURIComponent('Request to delete my Solid Rock church app account'));}}/>
+        </Surface>
       </>}
       {page === 'My interests' && <><Text style={s.pageIntro}>Saved locally on this device, not connected to a church account.</Text>
         <SectionHeading title="Gatherings"/>{preferences.interests.length ? sampleEvents.filter(x => preferences.interests.includes(x.id)).map(x => <Surface key={x.id}><Text style={s.cardTitle}>{x.title}</Text><Pressable onPress={() => toggleInterest(x.id)}><Text style={s.action}>Remove from saved</Text></Pressable></Surface>) : <Text style={s.body}>No gatherings saved yet.</Text>}
