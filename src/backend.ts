@@ -93,3 +93,24 @@ export async function pastoralAvailability(): Promise<PastoralSlot[]> {
   if (error) throw error;
   return (data ?? []) as PastoralSlot[];
 }
+
+export type EventRegistration={id:string;event_id:string;status:string;created_at:string};
+export type PastoralBooking={id:string;slot_id:string;created_at:string;cancelled_at:string|null};
+export async function myEventRegistrations():Promise<EventRegistration[]>{
+ if(!churchDb)return [];
+ const {data,error}=await churchDb.from('event_registrations').select('id,event_id,status,created_at').order('created_at',{ascending:false}).limit(80);
+ if(error)throw error;return (data??[]) as EventRegistration[];
+}
+export async function myPastoralBookings():Promise<PastoralBooking[]>{
+ if(!churchDb)return [];
+ const {data,error}=await churchDb.from('pastoral_bookings').select('id,slot_id,created_at,cancelled_at').order('created_at',{ascending:false}).limit(80);
+ if(error)throw error;return (data??[]) as PastoralBooking[];
+}
+export async function cancelEventRegistration(id:string){
+ if(!churchDb)throw new Error('Church services are not configured.');
+ const {error}=await churchDb.rpc('cancel_event_registration',{p_registration_id:id});if(error)throw error;
+}
+export async function cancelPastoralBooking(id:string){
+ if(!churchDb)throw new Error('Church services are not configured.');
+ const {error}=await churchDb.rpc('cancel_pastoral_booking',{p_booking_id:id});if(error)throw error;
+}
