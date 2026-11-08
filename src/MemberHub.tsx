@@ -51,7 +51,6 @@ export default function MemberHub() {
   const [registrations,setRegistrations]=useState<EventRegistration[]>([]);
   const [bookings,setBookings]=useState<PastoralBooking[]>([]);
   const [reading,setReading]=useState<PersonalReading>({});
-  const [savedRegistrations,setSavedRegistrations]=useState<string[]>([]);
   const [savedGroups,setSavedGroups]=useState<string[]>([]);
   const [savedOpportunities,setSavedOpportunities]=useState<string[]>([]);
 
@@ -131,8 +130,9 @@ export default function MemberHub() {
   function mustSignIn(){Alert.alert('Member sign-in required','Open the Account section to sign in first.');setSection('Account');}
   async function handleRegistration(event:ChurchEvent){
     if(!userId){mustSignIn();return;}
-    if(await run(()=>requestEventRegistration(event.id),'Registration confirmed by the church service.'))
-      setSavedRegistrations(prev=>prev.includes(event.id)?prev:[...prev,event.id]);
+    if(await run(()=>requestEventRegistration(event.id),'Registration confirmed by the church service.')) {
+      await loadPrivate();
+    }
   }
   async function handleJoin(group:ChurchGroup){
     if(!userId){mustSignIn();return;}
@@ -150,7 +150,7 @@ export default function MemberHub() {
     <Info>Explore public updates and connect with verified church services when available.</Info>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionNav}>
       {sections.map(x=><Pressable accessibilityRole="tab" accessibilityState={{selected:section===x}} key={x} onPress={()=>{
-        setSection(x);setError(null);if((x==='Giving'||x==='Care')&&userId)void loadPrivate();
+        setSection(x);setError(null);if((x==='Giving'||x==='Care'||x==='Events')&&userId)void loadPrivate();
       }} style={[styles.pill,section===x&&styles.selected]}><Text style={[styles.pillText,section===x&&styles.selectedText]}>{x}</Text></Pressable>)}
     </ScrollView>
     {!cloudEnabled && <View style={styles.notice}><Text style={styles.noticeTitle}>Offline experience</Text><Info>Member services need a church-controlled Supabase deployment. Local reading plans and existing app features remain usable.</Info></View>}
@@ -179,7 +179,7 @@ export default function MemberHub() {
     {section==='Events' && <Card title="Upcoming events">
       {data.events.length ? data.events.map((e:ChurchEvent)=><View key={e.id} style={styles.item}>
         <Text style={styles.itemTitle}>{e.title}</Text><Info>{fmt(e.starts_at)}{e.venue?' · '+e.venue:''}</Info><Info>{e.description}</Info>
-        {e.registration_enabled&&<CTA title={savedRegistrations.includes(e.id)?'Registration requested':'Register for event'} onPress={()=>void handleRegistration(e)} disabled={busy||savedRegistrations.includes(e.id)}/>}
+        {e.registration_enabled&&<CTA title={registrations.some(r=>r.event_id===e.id&&r.status==='registered')?'Registered':'Register for event'} onPress={()=>void handleRegistration(e)} disabled={busy||registrations.some(r=>r.event_id===e.id&&r.status==='registered')}/>}
       </View>) : <Info>No verified events are available from the church backend. For confirmed events, use the official website.</Info>}
       {userId&&<><Text style={styles.cardTitle}>My event registrations</Text>{registrations.filter(x=>x.status==='registered').map(r=><View key={r.id} style={styles.item}><Text style={styles.itemTitle}>{data.events.find(e=>e.id===r.event_id)?.title||'Registered event'}</Text><CTA title="Cancel my registration" onPress={()=>void run(async()=>{await cancelEventRegistration(r.id);await loadPrivate();},'Registration cancelled.')} disabled={busy}/></View>)}</>}
       <CTA title="Official church calendar" onPress={()=>void officialLink()}/>
