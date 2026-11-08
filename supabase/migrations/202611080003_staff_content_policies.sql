@@ -39,11 +39,6 @@ create policy "pastors modify own availability" on public.pastoral_slots
  pastor_id=auth.uid() and public.has_role(array['pastor','super_admin']::public.member_role[])
  ) with check(pastor_id=auth.uid());
 
-create policy "pastors read booked care" on public.pastoral_bookings
- for select to authenticated using(
-  user_id=auth.uid() or public.has_role(array['pastor','super_admin']::public.member_role[])
- );
-
 -- No UPDATE or DELETE rights are granted on giving_ledger, audit_events or prayer_requests.
 -- Prayer status changes must occur via a separately reviewed care-team RPC.
 -- Content publishing remains a church authorisation decision, not automatic model output.
