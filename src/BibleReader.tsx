@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
-import {ActivityIndicator,Pressable,ScrollView,StyleSheet,Text,TextInput,View} from 'react-native';
+import {ActivityIndicator,Platform,Pressable,ScrollView,StyleSheet,Text,TextInput,View} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppIcon from './AppIcon';
 import {theme as T} from './theme';
@@ -23,6 +23,20 @@ const BOOKS=[
 ] as const;
 type BookId=typeof BOOKS[number][0];
 const CACHE='@solidrock:web-chapters:v1', SAVED='@solidrock:bible-highlights:v1', JOURNAL='@solidrock:bible-notes:v1';
+// The church-owned read-only gateway is preferred on web and can be configured
+// for native signed builds; the public source is a fallback, not an SLA.
+function chapterUrls(book:string,chapter:number):string[]{
+ const fallback='https://bible-api.com/data/web/'+book+'/'+chapter;
+ if(Platform.OS==='web')return ['/api/bible?book='+encodeURIComponent(book)+'&chapter='+chapter,fallback];
+ const configured=process.env.EXPO_PUBLIC_SCRIPTURE_API_URL?.trim();
+ if(configured){
+   try{const url=new URL(configured);if(url.protocol==='https:'){
+    url.searchParams.set('book',book);url.searchParams.set('chapter',String(chapter));
+    return [url.toString(),fallback];
+   }}catch{}
+ }
+ return [fallback];
+}
 function chapterIsValid(v:unknown):v is Chapter{
  const obj=v as Chapter;
  return Boolean(obj?.translation?.license==='Public Domain'&&Array.isArray(obj.verses)
@@ -44,19 +58,27 @@ export default function BibleReader({onShare,fontScale=1}:{onShare:(reference:st
  ]).catch(()=>{});},[]);
  useEffect(()=>{
   let active=true;const abort=new AbortController();const timer=setTimeout(()=>abort.abort(),10000);
-  setBusy(true);setError('');setCached(false);
+  setBusy(true);setData(null);setError('');setCached(false);
   void(async()=>{
    let saved:Record<string,Chapter>={};
    try{const raw=await AsyncStorage.getItem(CACHE);if(raw)saved=JSON.parse(raw);}catch{}
    if(saved[queryKey]&&chapterIsValid(saved[queryKey])&&active){setData(saved[queryKey]);setCached(true);}
    try{
-    const response=await fetch('https://bible-api.com/data/web/'+book+'/'+chapter,{signal:abort.signal});
-    if(!response.ok)throw Error('Scripture service unavailable');
-    const result:unknown=await response.json();
-    if(!chapterIsValid(result))throw Error('This chapter is unavailable in the selected translation.');
+    let result:Chapter|null=null;
+    for(const url of chapterUrls(book,chapter)){
+      try{
+        const response=await fetch(url,{signal:abort.signal});
+        if(!response.ok)continue;
+        const candidate:unknown=await response.json();
+        if(chapterIsValid(candidate)&&candidate.verses.every(v=>v.book_id===book&&v.chapter===chapter)){
+          result=candidate;break;
+        }
+      }catch{if(abort.signal.aborted)break;}
+    }
+    if(!result)throw Error('Scripture service unavailable');
     if(active){setData(result);setCached(false);setError('');}
     saved[queryKey]=result;
-    // Limit offline cached chapters, do not mass-download or abuse the public API.
+    // Only a small number of personally opened chapters are cached.
     const keys=Object.keys(saved);for(const k of keys.slice(0,Math.max(0,keys.length-12)))delete saved[k];
     await AsyncStorage.setItem(CACHE,JSON.stringify(saved)).catch(()=>{});
    }catch{
