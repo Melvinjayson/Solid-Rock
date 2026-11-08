@@ -25,7 +25,7 @@ test('official content, dark default and persistent theme toggle', async ({page}
 test('five core tabs are visible and navigable', async ({page},testInfo) => {
   mkdirSync(folder,{recursive:true});
   for(const [tab,heading] of [
-    ['Watch','Watch & grow'],['Community','Together is better.'],['Events','Gather together'],['More','More to explore'],
+    ['Watch','Watch & grow'],['Community','Together is better.'],['Events','Gather together'],['More','Your space'],
   ] as const){
     await page.getByRole('tab',{name:tab,exact:true}).click();
     await expect(page.getByText(heading)).toBeVisible();
