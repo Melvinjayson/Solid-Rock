@@ -269,7 +269,7 @@ function AppContent() {
       { title: 'Official Instagram', desc: 'Photos, reels and posts', external: true },
     ];
     return <><Text style={s.pageTitle}>More to explore</Text><Text style={s.pageIntro}>Faith, community and helpful resources.</Text>
-      {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.external ? void Linking.openURL(l.title==='Prayer & fasting devotionals'?'https://solidrockdublin.org/day-2-repentance-and-surrender/':l.title==='Official YouTube'?YOUTUBE_CHANNEL:l.title==='Official Instagram'?INSTAGRAM_CHANNEL:CHURCH_URL) : goPage(l.target ?? null)}>
+      {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.external ? void Linking.openURL(l.title==='Prayer & fasting devotionals'?'https://solidrockdublin.org/devotional/day-2-repentance-and-surrender':l.title==='Official YouTube'?YOUTUBE_CHANNEL:l.title==='Official Instagram'?INSTAGRAM_CHANNEL:CHURCH_URL) : goPage(l.target ?? null)}>
         <View style={{ flex: 1 }}><Text style={s.menuTitle}>{l.title}</Text><Text style={s.menuDesc}>{l.desc}</Text></View><Text style={s.chevron}>›</Text>
       </Pressable>)}
       <Text style={s.disclaimer}>Member accounts, financial statements and pastoral bookings require approved integrations and are not enabled in this MVP.</Text>
