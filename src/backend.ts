@@ -50,10 +50,12 @@ export async function getPublicContent() {
   };
 }
 
-export async function requestEventRegistration(eventId: string) {
+export async function requestEventRegistration(eventId: string,allowWaitlist=false):Promise<'registered'|'waitlisted'> {
   if (!churchDb) throw new Error('Church services are not configured.');
-  const { error } = await churchDb.rpc('register_for_event', { p_event_id: eventId });
-  if (error) throw error;
+  const {data,error} = await churchDb.rpc('register_or_waitlist', { p_event_id: eventId,p_allow_waitlist:allowWaitlist });
+  if(error) throw error;
+  if(data!=='registered'&&data!=='waitlisted')throw new Error('Unexpected event registration response.');
+  return data;
 }
 export async function requestPastoralSlot(slotId: string) {
   if (!churchDb) throw new Error('Church services are not configured.');
