@@ -19,9 +19,27 @@
     "uat": {
       "distribution": "internal",
       "channel": "uat"
+    },
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_CHURCH_BACKEND_ENABLED": "false"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "track": "internal"
+      },
+      "ios": {}
+    }
   }
 }
