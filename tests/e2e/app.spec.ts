@@ -46,6 +46,8 @@ test('study-guide search and local bookmark persist without login', async ({page
   await expect(page.getByText('Grace for everyday life')).toBeVisible();
   await expect(page.getByText('Rooted in faith')).toHaveCount(0);
   await page.getByRole('button',{name:'☆ Save reading guide'}).click();
+  await expect(page.getByText('A community beyond Sunday.')).toBeVisible();
+  await page.getByRole('button',{name:'Skip welcome guide'}).click();
   await page.reload();
   await page.getByRole('tab',{name:'Watch',exact:true}).click();
   await expect(page.getByText(/Saved to this device/)).toBeVisible();
@@ -62,9 +64,9 @@ test('local data deletion requires confirmation and resets preferences', async (
   await page.getByRole('button',{name:'☆ Save reading guide'}).first().click();
   await page.getByRole('tab',{name:'More',exact:true}).click();
   await page.getByRole('button',{name:/Privacy and your data/}).click();
-  await page.getByRole('button',{name:'Clear locally saved preferences'}).click();
-  await expect(page.getByRole('button',{name:'Keep my saved data'})).toBeVisible();
-  await page.getByRole('button',{name:'Yes, clear this device'}).click();
+  await page.getByRole('button',{name:'Clear all app data on this device'}).click();
+  await expect(page.getByRole('button',{name:'Keep my data'})).toBeVisible();
+  await page.getByRole('button',{name:"Yes, erase this device's app data"}).click();
   await page.reload();
   await page.getByRole('tab',{name:'Watch',exact:true}).click();
   await expect(page.getByText('★ Saved to this device')).toHaveCount(0);
@@ -216,7 +218,7 @@ test('privacy erase removes Bible notes, faith progress, theme and reopens welco
  await page.getByRole('radio',{name:'Light / ivory'}).click();
  await page.getByRole('tab',{name:'More'}).click();
  await page.getByRole('button',{name:/Privacy and your data/}).click();
- await expect(page.getByText('Church account deletion')).toBeVisible();
+ await expect(page.getByText('Church account deletion',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Clear all app data on this device'}).click();
  await expect(page.getByText(/erases all Solid Rock local preferences/)).toBeVisible();
  await page.getByRole('button',{name:"Yes, erase this device's app data"}).click();
