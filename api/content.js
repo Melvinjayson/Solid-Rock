@@ -45,9 +45,39 @@ function base() {
     sources: { youtube: 'unconfigured', instagram: 'unconfigured', website: 'unconfigured' },
   };
 }
+// Public channel RSS provides an API-key-free recent-video feed. It does not
+// establish whether a stream is currently live; only the Data API can do that.
+async function youtubeRssFeed(result) {
+  try {
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 6500);
+    let xml;
+    try {
+      const response = await fetch('https://www.youtube.com/feeds/videos.xml?channel_id=' + CHANNEL_ID, {signal:controller.signal});
+      if(!response.ok)throw Error('YouTube RSS HTTP '+response.status);
+      xml=(await response.text()).slice(0,120000);
+    } finally { clearTimeout(timer); }
+    const entries=[...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].slice(0,15);
+    const tag=(body,name)=>{
+      const match=new RegExp('<'+name+'>([\\s\\S]*?)<\\/'+name+'>').exec(body);
+      return match ? match[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>') : '';
+    };
+    result.videos=entries.map((m)=>{
+      const id=tag(m[1],'yt:videoId');
+      if(!videoIdPattern.test(id))return null;
+      const tn=/<media:thumbnail[^>]*url="([^"]+)"/.exec(m[1]);
+      return {id,title:safeText(tag(m[1],'title'),180),description:'',thumbnail:tn?tn[1]:null,
+        publishedAt:tag(m[1],'published')||null,durationSeconds:null,state:'recorded',
+        url:'https://www.youtube.com/watch?v='+id};
+    }).filter(Boolean);
+    result.sources.youtube='rss';
+  }catch(err){
+    result.sources.youtube='unavailable';
+    console.warn('YouTube RSS unavailable:',err instanceof Error?err.message:'unknown');
+  }
+}
 async function youtubeFeed(result) {
   const key = process.env.YOUTUBE_DATA_API_KEY;
-  if (!key) return;
+  if (!key) return youtubeRssFeed(result);
   try {
     const channel = await jsonFetch(ytUrl('channels', { part: 'contentDetails,snippet', id: CHANNEL_ID }, key));
     const uploads = channel.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
@@ -95,7 +125,8 @@ async function youtubeFeed(result) {
     result.sources.youtube = 'ready';
   } catch (err) {
     result.sources.youtube = 'unavailable';
-    console.warn('YouTube feed unavailable:', err instanceof Error ? err.message : 'unknown');
+    console.warn('YouTube Data API unavailable, falling back to RSS:', err instanceof Error ? err.message : 'unknown');
+    await youtubeRssFeed(result);
   }
 }
 async function instagramFeed(result) {
@@ -160,7 +191,7 @@ let cache = null;
 let cachedUntil = 0;
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return res.status(405).json({ error: 'Method not allowed' }); }
-  const ttlSeconds = 900; // 15-minute shared-cache window; controls YouTube quota.
+  const ttlSeconds = 1800; // 30-minute shared-cache window; limits search.list quota.
   res.setHeader('Access-Control-Allow-Origin', '*'); // public read-only data, never member records.
   res.setHeader('Cache-Control', 'public, s-maxage=' + ttlSeconds + ', stale-while-revalidate=3600');
   res.setHeader('X-Content-Type-Options', 'nosniff');
