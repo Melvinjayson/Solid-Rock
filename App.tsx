@@ -42,8 +42,9 @@ function Tag({ children }: { children: React.ReactNode }) {
   return <View style={s.tag}><Text style={s.tagText}>{children}</Text></View>;
 }
 function PrimaryButton({ label, onPress, outline = false }: { label: string; onPress: () => void; outline?: boolean }) {
-  return <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [s.button, outline && s.buttonOutline, pressed && { opacity: 0.8 }]}>
-    <Text style={[s.buttonText, outline && { color: T.brand }]}>{label}</Text>
+  return <Pressable accessibilityRole="button" onPress={onPress} style={({pressed})=>[s.button,outline&&s.buttonOutline,pressed&&{opacity:.8}]}>
+    <Text style={[s.buttonText,outline&&{color:T.ink}]}>{label.replace(/\\s+[↗→]$/,'')}</Text>
+    {/[↗→]$/.test(label)&&<AppIcon name="arrow" size={17} color={outline?T.gold:'#16110A'}/>}
   </Pressable>;
 }
 function Surface({ children }: { children: React.ReactNode }) {
@@ -125,14 +126,14 @@ function AppContent() {
   function Home() {
     return <>
       <ImageBackground accessibilityLabel="Solid Rock congregation gathering for worship" source={{uri:churchAssets.worship}} style={{borderRadius:25,overflow:'hidden'}} imageStyle={{borderRadius:25}} resizeMode="cover"><View style={s.hero}><Tag>YOU BELONG HERE</Tag>
-        <Text style={[s.heroTitle,{color:'#FFFFFF'}]}>Welcome to{ '\n' }Solid Rock.</Text>
-        <Text style={[s.heroCopy,{color:'#F2EBDD'}]}>{INTRO}</Text>
+        <Text style={[s.heroTitle,{color:'#FFFFFF'}]}>Faith beyond{ '\n' }Sunday.</Text>
+        <Text style={[s.heroCopy,{color:'#F2EBDD'}]}>A space to belong, reflect, pray and stay connected with your church family.</Text>
         <Text style={{fontFamily:'Mulish_700Bold',fontSize:13,color:'#F5E3B3'}}>{SUNDAY_SERVICE} · Inchicore, Dublin 8</Text>
         <PrimaryButton label="Plan your visit  ↗" onPress={()=>{void Linking.openURL(VISIT_URL);}}/>
       </View></ImageBackground>
       <View style={s.quickRow}>
         <Pressable style={s.quick} onPress={() => goTab('Watch')} accessibilityRole="button"><AppIcon name="watch" size={25} color={T.gold}/><Text style={s.quickTitle}>Watch</Text><Text style={s.quickMeta}>Worship & study</Text></Pressable>
-        <Pressable style={s.quick} onPress={() => goTab('Events')} accessibilityRole="button"><AppIcon name="events" size={25} color={T.gold}/><Text style={s.quickTitle}>Events</Text><Text style={s.quickMeta}>Gather together</Text></Pressable>
+        <Pressable style={s.quick} onPress={() => goTab('Community')} accessibilityRole="button"><AppIcon name="community" size={25} color={T.gold}/><Text style={s.quickTitle}>Community</Text><Text style={s.quickMeta}>Pray & connect</Text></Pressable>
         <Pressable style={s.quick} onPress={() => goPage('Prayer')} accessibilityRole="button"><AppIcon name="prayer" size={25} color={T.gold}/><Text style={s.quickTitle}>Prayer</Text><Text style={s.quickMeta}>Find support</Text></Pressable>
       </View>
       {remote?.announcements?.length ? <><SectionHeading title="Church announcements"/>{remote.announcements.slice(0,2).map(a=><Surface key={a.id}><Text style={s.cardTitle}>{a.title}</Text><Text style={s.body}>{a.body}</Text></Surface>)}</> : null}
@@ -268,6 +269,7 @@ function AppContent() {
       { title: 'Prayer & fasting devotionals', desc: 'Read published 2026 church devotionals', external: true },
       { title: 'Prayer & care', desc: 'Private pastoral contact information', target: 'Prayer' },
       { title: 'Fellowships & ministries', desc: 'Connect and discover ways to serve', target: 'Groups' },
+      { title: 'Welcome guide', desc: 'Explore what the app can do', target: null },
       { title: 'Church hub', desc: 'Membership, events, groups, pastoral care and reading plans', target: 'Church hub' },
       { title: 'Giving', desc: 'Support the church through verified giving information', target: 'Giving' },
       { title: 'Community feed', desc: 'Church videos, Instagram posts and website news', target: 'Social' },
@@ -278,8 +280,8 @@ function AppContent() {
       { title: 'Official YouTube', desc: 'Church livestreams and recordings', external: true },
       { title: 'Official Instagram', desc: 'Photos, reels and posts', external: true },
     ];
-    return <><Text style={s.pageTitle}>More to explore</Text><Text style={s.pageIntro}>Faith, community and helpful resources.</Text>
-      {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.external ? void Linking.openURL(l.title==='Prayer & fasting devotionals'?'https://solidrockdublin.org/devotional/day-2-repentance-and-surrender':l.title==='Official YouTube'?YOUTUBE_CHANNEL:l.title==='Official Instagram'?INSTAGRAM_CHANNEL:CHURCH_URL) : goPage(l.target ?? null)}>
+    return <><Text style={s.pageTitle}>Your space</Text><Text style={s.pageIntro}>Preferences, useful resources and your connection to Solid Rock.</Text>
+      {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.title==='Welcome guide'?setOnboarding('show'):l.external ? void Linking.openURL(l.title==='Prayer & fasting devotionals'?'https://solidrockdublin.org/devotional/day-2-repentance-and-surrender':l.title==='Official YouTube'?YOUTUBE_CHANNEL:l.title==='Official Instagram'?INSTAGRAM_CHANNEL:CHURCH_URL) : goPage(l.target ?? null)}>
         <View style={{ flex: 1 }}><Text style={s.menuTitle}>{l.title}</Text><Text style={s.menuDesc}>{l.desc}</Text></View><AppIcon name="chevron" size={18} color={T.muted}/>
       </Pressable>)}
       <Text style={s.disclaimer}>Member accounts, financial statements and pastoral bookings require approved integrations and are not enabled in this MVP.</Text>
@@ -385,7 +387,7 @@ function makeStyles(){return StyleSheet.create({
   hero: { borderRadius: 25, padding: 25, backgroundColor: 'rgba(15,13,10,0.70)', gap: 15, minHeight:300, justifyContent:'center' },
   heroTitle: { fontFamily:'Poppins_700Bold', color: T.ink, fontWeight: '900', fontSize: 35, lineHeight: 42, letterSpacing: -1.3 },
   heroCopy: { fontFamily:'Mulish_400Regular', color: T.muted, fontSize: 15, lineHeight: 23 },
-  button: {alignItems:'center',justifyContent:'center',backgroundColor:T.gold,borderRadius:16,minHeight:50,paddingHorizontal:19,paddingVertical:12,marginTop:6},
+  button: {alignItems:'center',justifyContent:'center',flexDirection:'row',gap:9,backgroundColor:T.gold,borderRadius:16,minHeight:50,paddingHorizontal:19,paddingVertical:12,marginTop:6},
   buttonOutline: { backgroundColor: T.white, borderWidth: 1, borderColor: T.border },
   buttonText: {color:'#16110A',fontFamily:'Mulish_700Bold',fontSize:14},
   quickRow: { flexDirection: 'row', gap: 10 },
