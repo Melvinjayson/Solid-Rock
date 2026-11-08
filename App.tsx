@@ -120,6 +120,7 @@ function AppContent() {
     return <>
       <Text style={s.pageTitle}>Watch & grow</Text><Text style={s.pageIntro}>Worship, teaching and Scripture for every day.</Text>
       <View style={s.mediaHero}><Text style={s.livePill}>● WORSHIP ONLINE</Text><Text style={s.mediaTitle}>Join our community{ '\n' }in worship</Text><Text style={s.mediaSub}>Official services and the latest messages are available through the church.</Text><PrimaryButton label="Visit official media  ↗" onPress={openOfficialSite}/></View>
+      <Surface><Tag>FROM SOLID ROCK DUBLIN</Tag><Text style={s.cardTitle}>Demonstrating the Gospel of Christ</Text><Text style={s.body}>Listen to the welcome audio published on the official church website.</Text><PrimaryButton label="Listen to welcome message  ↗" outline onPress={()=>{void Linking.openURL('https://solidrockdublin.org/wp-content/uploads/2025/02/Welcome.mp3');}}/></Surface>
       {remote?.sermons?.length ? <><SectionHeading title="Church sermons"/>{remote.sermons.map(m=><Surface key={m.id}><Tag>{m.series||'SERMON'}</Tag><Text style={s.cardTitle}>{m.title}</Text><Text style={s.body}>{m.description}</Text><Text style={s.meta}>{[m.speaker,m.passage].filter(Boolean).join(' · ')}</Text>{m.media_url?.startsWith('https://')?<PrimaryButton label="Open sermon  ↗" outline onPress={()=>{void Linking.openURL(m.media_url!);}}/>:null}</Surface>)}</> : null}
       <SectionHeading title="Study guides"/><TextInput accessibilityLabel="Search study guides" value={search} onChangeText={setSearch} placeholder="Search topics or Scripture" placeholderTextColor={T.muted} style={s.input}/>
       {filtered.map(m => <Surface key={m.id}><Tag>{m.series}</Tag><Text style={s.cardTitle}>{m.title}</Text><Text style={s.body}>{m.description}</Text><Text style={s.meta}>{m.passage}</Text><Pressable accessibilityRole="button" onPress={() => toggleBookmark(m.id)}><Text style={s.action}>{preferences.bookmarks.includes(m.id) ? '★ Saved to this device' : '☆ Save reading guide'}</Text></Pressable></Surface>)}
@@ -161,6 +162,7 @@ function AppContent() {
   function More() {
     const links: { title: string; desc: string; target?: Page; external?: boolean }[] = [
       { title: 'Bible & reading', desc: 'Open Scripture and reading guides', target: 'Bible' },
+      { title: 'Prayer & fasting devotionals', desc: 'Read published 2026 church devotionals', external: true },
       { title: 'Prayer & care', desc: 'Private pastoral contact information', target: 'Prayer' },
       { title: 'Fellowships & ministries', desc: 'Connect and discover ways to serve', target: 'Groups' },
       { title: 'Church hub', desc: 'Membership, events, groups, pastoral care and reading plans', target: 'Church hub' },
@@ -170,7 +172,7 @@ function AppContent() {
       { title: 'Official website', desc: 'Latest information and announcements', external: true },
     ];
     return <><Text style={s.pageTitle}>More to explore</Text><Text style={s.pageIntro}>Faith, community and helpful resources.</Text>
-      {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.external ? void openOfficialSite() : goPage(l.target ?? null)}>
+      {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.external ? void Linking.openURL(l.title==='Prayer & fasting devotionals'?'https://solidrockdublin.org/blog-standart/':CHURCH_URL) : goPage(l.target ?? null)}>
         <View style={{ flex: 1 }}><Text style={s.menuTitle}>{l.title}</Text><Text style={s.menuDesc}>{l.desc}</Text></View><Text style={s.chevron}>›</Text>
       </Pressable>)}
       <Text style={s.disclaimer}>Member accounts, financial statements and pastoral bookings require approved integrations and are not enabled in this MVP.</Text>
