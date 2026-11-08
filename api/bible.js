@@ -19,7 +19,8 @@ function validate(value,book,chapter){
 }
 module.exports=async function handler(req,res){
   res.setHeader('X-Content-Type-Options','nosniff');
-  res.setHeader('Cache-Control','public, s-maxage=86400, stale-while-revalidate=604800');
+  // Never cache upstream failures or malformed requests for a full day.
+  res.setHeader('Cache-Control','no-store');
   res.setHeader('Access-Control-Allow-Origin','*');
   if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
   const rawBook=req.query?.book,rawChapter=req.query?.chapter;
@@ -29,7 +30,10 @@ module.exports=async function handler(req,res){
     return res.status(400).json({error:'Invalid book or chapter'});
   const key=book+':'+chapter;
   const cached=cache.get(key);
-  if(cached&&cached.until>Date.now())return res.status(200).json(cached.value);
+  if(cached&&cached.until>Date.now()){
+    res.setHeader('Cache-Control','public, s-maxage=86400, stale-while-revalidate=604800');
+    return res.status(200).json(cached.value);
+  }
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),6000);
   try{
@@ -38,10 +42,11 @@ module.exports=async function handler(req,res){
     const result=validate(await response.json(),book,chapter);
     if(cache.size>=80)cache.delete(cache.keys().next().value);
     cache.set(key,{until:Date.now()+TTL,value:result});
+    res.setHeader('Cache-Control','public, s-maxage=86400, stale-while-revalidate=604800');
     return res.status(200).json(result);
   }catch(e){
     console.warn('Scripture retrieval unavailable',e instanceof Error?e.message:'unknown');
-    if(cached)return res.status(200).json(cached.value);
+    if(cached){res.setHeader('Cache-Control','public, s-maxage=300');return res.status(200).json(cached.value);}
     return res.status(503).json({error:'Scripture temporarily unavailable'});
   }finally{clearTimeout(timer);}
 };
