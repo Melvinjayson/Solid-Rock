@@ -6,6 +6,7 @@ import Onboarding from './src/Onboarding';
 import CommunityScreen from './src/CommunityScreen';
 import GivingScreen from './src/GivingScreen';
 import BibleReader from './src/BibleReader';
+import JourneyScreen from './src/JourneyScreen';
 import TalkToUsScreen from './src/TalkToUsScreen';
 import SocialConnectScreen from './src/SocialConnectScreen';
 import NotificationsScreen from './src/NotificationsScreen';
@@ -27,7 +28,7 @@ import { loadMediaFeed, YOUTUBE_CHANNEL, YOUTUBE_LIVE, INSTAGRAM_CHANNEL, OFFICI
 import { cloudEnabled, getPublicContent } from './src/backend';
 
 type Tab = 'Home' | 'Watch' | 'Community' | 'Events' | 'More';
-type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'Privacy' | 'Giving' | 'My interests' | 'Church hub' | 'Social' | 'Talk to us' | 'Preferences' | 'Notifications' | null;
+type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'Privacy' | 'Giving' | 'My interests' | 'Church hub' | 'Social' | 'Talk to us' | 'Preferences' | 'Notifications' | 'Journey' | null;
 const tabs: { name: Tab; icon:IconName }[] = [
   {name:'Home',icon:'home'},{name:'Watch',icon:'watch'},
   {name:'Community',icon:'community'},{name:'Events',icon:'events'},
@@ -149,6 +150,11 @@ function AppContent() {
       {remote?.announcements?.length ? <><SectionHeading title="Church announcements"/>{remote.announcements.slice(0,2).map(a=><Surface key={a.id}><Text style={s.cardTitle}>{a.title}</Text><Text style={s.body}>{a.body}</Text></Surface>)}</> : null}
       <SectionHeading title="This week" action="All events" onAction={() => goTab('Events')}/>
       <Surface><Tag>WEEKLY WORSHIP</Tag><Text style={s.cardTitle}>{SUNDAY_SERVICE}</Text><Text style={s.body}>{CONTACT_ADDRESS}</Text><PrimaryButton label="Plan a visit  ↗" outline onPress={()=>{void Linking.openURL(VISIT_URL);}}/></Surface>
+      <SectionHeading title="Grow at your own pace" action="My journey" onAction={()=>goPage('Journey')}/>
+      <Surface><Tag>THIS WEEK'S SMALL STEP</Tag><Text style={s.cardTitle}>Seven days. Your pace.</Text>
+        <Text style={s.body}>Explore Scripture, kindness and everyday faith through simple reflections you can save privately.</Text>
+        <PrimaryButton label="Start a personal faith journey" onPress={()=>goPage('Journey')}/>
+      </Surface>
       <SectionHeading title="Find your place" action="Explore ministries" onAction={()=>goPage('Groups')}/>
       <Surface><Text style={s.cardTitle}>From first visit to feeling at home</Text>
         <Text style={s.body}>Meet people across backgrounds and generations, grow in Scripture and discover ways to serve.</Text>
@@ -266,6 +272,7 @@ function AppContent() {
   function More() {
     const links: { title: string; desc: string; target?: Page; external?: boolean }[] = [
       { title: 'Bible & reading', desc: 'Read, highlight and discuss the World English Bible', target: 'Bible' },
+      { title: 'Your faith journey', desc: 'Small reflections for every age and stage', target: 'Journey' },
       { title: 'Talk to us', desc: 'Questions, pastoral contact, inclusion and support', target: 'Talk to us' },
       { title: 'Updates', desc: 'Church messages and news in one place', target: 'Notifications' },
       { title: 'Preferences', desc: 'Black mode, reading comfort and reminders', target: 'Preferences' },
@@ -291,13 +298,14 @@ function AppContent() {
 
   function Detail() {
     return <><Pressable accessibilityRole="button" onPress={() => goPage(null)} style={{ marginBottom: 22 }}><Text style={s.action}>← Back</Text></Pressable>
-      {page==='Church hub'?<MemberHub/>:!(['Bible','Giving','Social','Talk to us','Preferences','Notifications'] as Page[]).includes(page)&&<Text style={s.pageTitle}>{page}</Text>}
+      {page==='Church hub'?<MemberHub/>:!(['Bible','Giving','Social','Talk to us','Preferences','Notifications','Journey'] as Page[]).includes(page)&&<Text style={s.pageTitle}>{page}</Text>}
       {page === 'Giving' && <GivingScreen/>}
       {page === 'Talk to us' && <TalkToUsScreen/>}
       {page === 'Notifications' && <NotificationsScreen feed={media} announcements={remote?.announcements||[]} prefs={appPrefs} onWatch={()=>goTab('Watch')}/>}
       {page === 'Preferences' && <PreferencesScreen mode={mode} setMode={v=>{setMode(v);void AsyncStorage.setItem('@solidrock:theme',v);}} prefs={appPrefs} setPrefs={setAppPrefs} onAccount={()=>goPage('Church hub')}/>} 
       {page === 'Social' && <SocialConnectScreen feed={media} busy={mediaBusy} onRefresh={()=>{void refreshMedia();}} onWatch={()=>goTab('Watch')}/>}
       {page === 'Bible' && <BibleReader fontScale={appPrefs.fontScale} onShare={reference=>{setStudyShare(reference);goTab('Community');}}/>}
+      {page === 'Journey' && <JourneyScreen onBible={()=>goPage('Bible')} onCommunity={()=>goTab('Community')}/>}
       {page === 'Prayer' && <><Text style={s.pageIntro}>You are not alone. Connect with the church for prayer and pastoral care.</Text>
         <Surface><Text style={s.cardTitle}>Prepare a prayer request</Text><Text style={s.body}>You may draft a short personal note below. It stays in this screen and is not submitted, saved or shared.</Text>
           <TextInput multiline value={prayer} onChangeText={setPrayer} placeholder="Write a private draft (optional)" placeholderTextColor={T.muted} style={[s.input, { height: 120, textAlignVertical: 'top' }]} accessibilityLabel="Draft prayer request"/>
