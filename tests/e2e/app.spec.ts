@@ -83,11 +83,12 @@ test('church YouTube player, playlist and Instagram fallback',async ({page})=>{
   await expect(page.getByText('From our community')).toBeVisible();
   await expect(page.getByText('Follow Solid Rock Centre')).toBeVisible();
 });
-test('ministry photography and official accounts have accessible navigation',async ({page})=>{
+test('ministry photography is in Discover ministries, not duplicated on the app home',async ({page})=>{
+  await expect(page.getByText('Find your place')).toBeVisible();
+  await page.getByRole('button',{name:/Explore ministries/}).click();
   await expect(page.getByText('Food Bank')).toBeVisible();
   await expect(page.getByText('Youth Sunday School')).toBeVisible();
   await expect(page.getByText('Spirituality')).toBeVisible();
-  await expect(page.getByText('From our community')).toBeVisible();
 });
 
 test('first-run onboarding introduces guest-first community and remembers completion',async ({page},testInfo)=>{
@@ -148,11 +149,11 @@ test('Preferences provides true black default, light toggle and readable Bible s
  await page.getByRole('tab',{name:'More'}).click();
  await page.getByRole('button',{name:/^Preferences/}).click();
  await expect(page.getByText('Preferences',{exact:true})).toBeVisible();
- await expect(page.getByRole('button',{name:'Black / dark'})).toHaveAttribute('aria-selected','true');
- await page.getByRole('button',{name:'Light / ivory'}).click();
+ await expect(page.getByRole('radio',{name:'Black / dark'})).toHaveAttribute('aria-checked','true');
+ await page.getByRole('radio',{name:'Light / ivory'}).click();
  await expect(page.getByRole('button',{name:'Switch to dark mode'})).toBeVisible();
- await page.getByRole('button',{name:'Extra large'}).click();
- await expect(page.getByRole('button',{name:'Extra large'})).toHaveAttribute('aria-selected','true');
+ await page.getByRole('radio',{name:'Extra large'}).click();
+ await expect(page.getByRole('radio',{name:'Extra large'})).toHaveAttribute('aria-checked','true');
  await page.reload();
  await page.getByRole('tab',{name:'More'}).click();
  await page.getByRole('button',{name:/^Preferences/}).click();
