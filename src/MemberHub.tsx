@@ -71,10 +71,10 @@ export default function MemberHub() {
     return()=>{live=false;subscription.unsubscribe();};
   },[refresh]);
 
-  async function run(action:()=>Promise<void>,success:string){
+  async function run(action:()=>Promise<void>,success:string): Promise<boolean>{
     setBusy(true);
-    try{await action();Alert.alert('Success',success);}
-    catch(e){Alert.alert('Unable to complete',safeMessage(e));}
+    try{await action();Alert.alert('Success',success);return true;}
+    catch(e){Alert.alert('Unable to complete',safeMessage(e));return false;}
     finally{setBusy(false);}
   }
   async function saveReading(key:string,day:number) {
@@ -116,18 +116,18 @@ export default function MemberHub() {
   function mustSignIn(){Alert.alert('Member sign-in required','Open the Account section to sign in first.');setSection('Account');}
   async function handleRegistration(event:ChurchEvent){
     if(!userId){mustSignIn();return;}
-    await run(()=>requestEventRegistration(event.id),'Registration confirmed by the church service.');
-    setSavedRegistrations(prev=>prev.includes(event.id)?prev:[...prev,event.id]);
+    if(await run(()=>requestEventRegistration(event.id),'Registration confirmed by the church service.'))
+      setSavedRegistrations(prev=>prev.includes(event.id)?prev:[...prev,event.id]);
   }
   async function handleJoin(group:ChurchGroup){
     if(!userId){mustSignIn();return;}
-    await run(()=>joinGroup(group.id),'Your fellowship membership was recorded.');
-    setSavedGroups(prev=>prev.includes(group.id)?prev:[...prev,group.id]);
+    if(await run(()=>joinGroup(group.id),'Your fellowship membership was recorded.'))
+      setSavedGroups(prev=>prev.includes(group.id)?prev:[...prev,group.id]);
   }
   async function handleVolunteer(opp:VolunteerOpportunity){
     if(!userId){mustSignIn();return;}
-    await run(()=>volunteer(opp.id),'Your interest has been recorded.');
-    setSavedOpportunities(prev=>prev.includes(opp.id)?prev:[...prev,opp.id]);
+    if(await run(()=>volunteer(opp.id),'Your interest has been recorded.'))
+      setSavedOpportunities(prev=>prev.includes(opp.id)?prev:[...prev,opp.id]);
   }
 
   return <View style={styles.wrap}>
