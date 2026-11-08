@@ -1,6 +1,6 @@
 # Solid Rock Centre — Mobile App MVP
 
-> **Implementation status:** Runnable Expo/React Native source implementation on feature branch. This is an interactive prototype and not a released app. No church membership, payment, sermon-hosting or appointment backend has been connected.
+> **Implementation status:** Runnable Expo/React Native source implementation on feature branch. This is an interactive prototype and not a released app. Optional church-specific backend integration code is present, but no live Supabase environment, payment provider, sermon-hosting system or appointment service has been configured.
 
 ## Run locally
 
@@ -16,6 +16,19 @@ Open the Expo development server using Android Emulator, iOS Simulator (macOS), 
 ```bash
 npm run typecheck
 ```
+
+## Latest expanded implementation
+
+The repository now also includes:
+
+- `src/backend.ts`: typed Supabase service calls, email OTP identity support, membership event registration, fellowships, volunteering, pastoral bookings and giving-history reads.
+- `src/MemberHub.tsx`: member services, church content, prayer requests, reading-plan progress, self-service cancellation and account management.
+- `admin/`: standalone Next.js role-gated church management portal.
+- `supabase/migrations/`: church data model, RLS policies, staff roles and transactional event/appointment operations.
+- `docs/FEATURE_STATUS.md`: explicit P0–P2 implementation status and remaining gaps.
+- `docs/DEPLOYMENT_GUIDE.md`: safe staging and operational configuration.
+
+**Verified so far:** GitHub Actions mobile and admin TypeScript checks passed. **Not verified:** physical iOS/Android runtime, SQL migrations against real Supabase, native media playback, app-store submissions or production integrations. This is not a completed P0–P2 production release.
 
 ## What works in this implementation
 
@@ -254,7 +267,7 @@ These are **targets**, not observed performance.
 
 ## Project status and next action
 
-**Current state:** Architecture and product planning documented. No mobile or backend implementation has been committed to this repository as part of the planning work.
+**Current state:** Architecture and product planning documented. Mobile, backend schema and administration source now exist on the feature branch; production validation and integrations remain pending.
 
 **Next step:** Complete a code-level Liberty audit, confirm existing app ownership and build the first vertical slice: **discover an event → register → receive confirmation → view registration in admin**.
 
