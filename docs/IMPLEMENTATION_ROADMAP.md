@@ -1,12 +1,16 @@
 # Solid Rock Mobile Platform
 
-Implementation planning baseline — 1 November 2026.
+**Original planning baseline — 1 November 2026 (historical).**
+
+**Reconciliation — 8 November 2026:** This document retains the original 24-week target plan as a baseline, **not a current completion report**. Refer to [Roadmap Delivery Audit](ROADMAP_DELIVERY_AUDIT.md) for the authoritative P0–P2 implemented/tested/gated statuses and [MVP Release Candidate](MVP_RELEASE_CANDIDATE.md) for release gates.
+
+Current guest-first navigation: **Home · Watch · Community · Events · More**. Bank/online giving and Bible reading are under More. Public content and consented local preferences function without a church account. Authenticated live messaging, finance and pastoral workflows remain gated until staging and church approvals.
 
 ## Objective
 Modernise the existing Solid Rock church application for iOS and Android, retaining operational continuity with ChMeetings while introducing a church-owned mobile experience and administration portal.
 
 ## Product navigation
-Home · Watch · Events · Give · More
+Original proposal: Home · Watch · Events · Give · More (superseded by Home · Watch · Community · Events · More).
 
 Public access: service details, sermons, Bible, public events, announcements.
 Authenticated access: member profile, registrations, giving history, fellowship membership, pastoral appointments.

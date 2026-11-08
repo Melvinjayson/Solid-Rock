@@ -1,0 +1,149 @@
+name: Mobile validation
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Validate Expo SDK native dependency compatibility
+        env:
+          CI: '1'
+        run: npx --yes expo-doctor@latest
+
+  admin-typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install admin dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck admin
+        run: npm run typecheck
+
+  web-uat-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install browser dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Run real-browser UAT smoke and capture screenshots
+        run: npm run test:e2e
+      - name: Upload UAT screenshots and browser traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: solid-rock-uat-screenshots
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
+  sql-syntax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PostgreSQL parser
+        run: python -m pip install 'pglast>=7,<9'
+      - name: Parse all database migrations
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from pglast import parse_sql
+          files=sorted(Path('supabase/migrations').glob('*.sql'))
+          assert files, 'No migrations found'
+          for f in files:
+              parse_sql(f.read_text())
+              print('Parsed:',f)
+          print(f'{len(files)} SQL migrations parsed successfully (syntax only; RLS execution still requires staging)')
+          PY
+
+  content-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify serverless content API syntax
+        run: node --check api/content.js
+      - name: Test read-only content aggregation and security boundaries
+        run: node --test tests/content-api.test.cjs
+      - name: Test member OTP input validation
+        run: node --test tests/auth-validation.test.cjs
+      - name: Validate public-domain Scripture gateway
+        run: |
+          node --check api/bible.js
+          node --test tests/bible-api.test.cjs
+      - name: Check safe store identity configuration
+        run: node -e "const app=require('./app.config.js')({config:{}});if(!app.android.package.endsWith('.preview'))process.exit(1);"
+      - name: Verify production member safety gates
+        run: node --test tests/release-config.test.cjs
+
+  community-db-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: solid_rock_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d solid_rock_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: solid_rock_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Bootstrap isolated Supabase-style identity fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/db/bootstrap.sql
+      - name: Apply all schema migrations in order
+        run: |
+          set -euo pipefail
+          for file in supabase/migrations/*.sql; do
+            echo "Running $file"
+            psql -v ON_ERROR_STOP=1 -f "$file"
+          done
+      - name: Verify channel security, reporting, isolation and moderation
+        run: psql -v ON_ERROR_STOP=1 -f tests/db/community_rls.sql
+      - name: Verify waitlists and staff-only idempotent attendance
+        run: psql -v ON_ERROR_STOP=1 -f tests/db/events_waitlist.sql

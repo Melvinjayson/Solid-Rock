@@ -1,0 +1,84 @@
+import React,{useState} from 'react';
+import {Alert,Linking,Pressable,StyleSheet,Text,View} from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import AppIcon from './AppIcon';
+import {GIVING,CONTACT,GIVE_REVIEW_NOTE} from './churchFacts';
+import {theme as T} from './theme';
+
+export default function GivingScreen(){
+ const [copied,setCopied]=useState(false),[method,setMethod]=useState<'transfer'|'online'>('transfer');
+ const styles=makeStyles();
+ async function copy(){
+  try{const ok=await Clipboard.setStringAsync(GIVING.iban.replace(/\s/g,''));if(!ok)throw Error('Clipboard unavailable');
+    setCopied(true);Alert.alert('IBAN copied','Confirm the beneficiary with the church before sending a transfer.');
+  }catch{Alert.alert('Copy unavailable','Select the IBAN shown here and copy it into your banking app.');}
+ }
+ async function open(url:string){
+  try{await Linking.openURL(url);}catch{Alert.alert('Link unavailable','Please visit the church giving page in your browser.');}
+ }
+ return <View style={styles.wrap}>
+  <Text style={styles.kicker}>GIVING WITH PURPOSE</Text>
+  <Text style={styles.title}>Generosity, made simple.</Text>
+  <Text style={styles.intro}>Support the church through its published giving options. Giving is always voluntary.</Text>
+  <View style={styles.methods}>
+   {(['transfer','online'] as const).map(m=><Pressable key={m} accessibilityRole="button"
+     accessibilityState={{selected:method===m}} style={[styles.method,method===m&&styles.active]} onPress={()=>setMethod(m)}>
+     <AppIcon name={m==='transfer'?'globe':'give'} color={method===m?'#16110A':T.gold} size={20}/>
+     <Text style={[styles.methodTitle,method===m&&{color:'#16110A'}]}>{m==='transfer'?'Bank transfer':'Online giving'}</Text>
+   </Pressable>)}
+  </View>
+  {method==='transfer'?<View style={styles.card}>
+    <View style={styles.row}><View style={styles.icon}><AppIcon name="shield" color={T.gold} size={22}/></View>
+     <View style={{flex:1}}><Text style={styles.label}>OFFICIAL CHURCH BANK ACCOUNT</Text><Text style={styles.subtitle}>IBAN · published by Solid Rock Dublin</Text></View>
+    </View>
+    <Text accessibilityLabel={'IBAN '+GIVING.iban} selectable style={styles.iban}>{GIVING.iban}</Text>
+    <Pressable accessibilityRole="button" style={styles.cta} onPress={()=>{void copy();}}>
+      <Text style={styles.ctaLabel}>{copied?'Copied · Copy again':'Copy IBAN'}</Text><AppIcon name="check" color="#16110A" size={18}/>
+    </Pressable>
+    <Text style={styles.hint}>Open your banking app to make the transfer. The app does not access your bank or confirm payments.</Text>
+   </View>:<View style={styles.card}>
+    <View style={styles.row}><View style={styles.icon}><AppIcon name="give" color={T.gold}/></View>
+     <View style={{flex:1}}><Text style={styles.label}>CHURCH'S PUBLISHED PAYPAL LINK</Text>
+      <Text style={styles.subtitle}>Pay through PayPal's own secure site.</Text></View></View>
+    <Text style={styles.body}>A debit or credit card may be offered by PayPal depending on your country, account and checkout eligibility. No card number is entered into this app.</Text>
+    <Pressable accessibilityRole="button" style={styles.cta} onPress={()=>{void open(GIVING.paypal);}}>
+      <Text style={styles.ctaLabel}>Continue to church PayPal</Text><AppIcon name="arrow" color="#16110A" size={18}/>
+    </Pressable>
+    <Text style={styles.hint}>Payment amount, confirmation, recurring options and any fees are controlled by PayPal—not by Solid Rock's app.</Text>
+   </View>}
+  <View style={styles.notice}><AppIcon name="shield" color={T.gold} size={19}/>
+    <Text style={styles.noticeText}>{GIVE_REVIEW_NOTE}</Text></View>
+  <Pressable accessibilityRole="button" style={styles.linkCard} onPress={()=>{void open(GIVING.source);}}>
+    <AppIcon name="globe" color={T.gold} size={20}/>
+    <View style={{flex:1}}><Text style={styles.linkTitle}>Check official giving details</Text><Text style={styles.subtitle}>solidrockdublin.org/give</Text></View>
+    <AppIcon name="arrow" color={T.gold} size={18}/>
+  </Pressable>
+  <View style={styles.card}><Text style={styles.cardTitle}>Questions about your gift?</Text>
+   <Text style={styles.body}>For payment references, transfer confirmation, donation enquiries and receipts, contact the church finance team through the published office email.</Text>
+   <Pressable accessibilityRole="button" style={styles.linkCard} onPress={()=>{void open('mailto:'+CONTACT.email+'?subject='+encodeURIComponent('Giving enquiry — Solid Rock Centre'));}}>
+    <AppIcon name="chat" color={T.gold} size={19}/><Text style={[styles.linkTitle,{flex:1}]}>{CONTACT.email}</Text><AppIcon name="arrow" color={T.gold} size={17}/>
+   </Pressable>
+  </View>
+  <Text style={styles.footnote}>Bank details verified against the official giving page on 8 November 2026. The church must reapprove payment information before store release. No receipts or transaction confirmations are generated by this app.</Text>
+ </View>;
+}
+function makeStyles(){return StyleSheet.create({
+ wrap:{gap:16},kicker:{fontSize:11,color:T.gold,fontFamily:'Mulish_700Bold',letterSpacing:1.7},
+ title:{fontFamily:'Poppins_700Bold',fontSize:28,lineHeight:37,color:T.ink},
+ intro:{fontFamily:'Mulish_400Regular',fontSize:15,lineHeight:23,color:T.muted},
+ methods:{flexDirection:'row',gap:10},method:{flex:1,minHeight:56,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:9,borderWidth:1,borderColor:T.border,backgroundColor:T.white,borderRadius:15,paddingHorizontal:8},
+ active:{backgroundColor:T.gold,borderColor:T.gold},methodTitle:{fontFamily:'Mulish_700Bold',fontSize:12,color:T.ink},
+ card:{backgroundColor:T.white,borderWidth:1,borderColor:T.border,borderRadius:23,padding:19,gap:14},
+ row:{flexDirection:'row',alignItems:'center',gap:13},icon:{backgroundColor:T.pale,borderRadius:15,width:48,height:48,alignItems:'center',justifyContent:'center'},
+ label:{fontFamily:'Mulish_700Bold',fontSize:11,letterSpacing:1,color:T.gold},subtitle:{fontFamily:'Mulish_400Regular',fontSize:12,color:T.muted,lineHeight:19,marginTop:3},
+ iban:{fontFamily:'Poppins_700Bold',fontSize:19,color:T.ink,letterSpacing:.5,lineHeight:29},
+ cta:{backgroundColor:T.gold,borderRadius:15,paddingVertical:15,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10,minHeight:52},
+ ctaLabel:{fontFamily:'Mulish_700Bold',color:'#16110A',fontSize:14},
+ hint:{fontFamily:'Mulish_400Regular',fontSize:12,lineHeight:20,color:T.muted},
+ body:{fontFamily:'Mulish_400Regular',fontSize:14,lineHeight:23,color:T.muted},
+ notice:{backgroundColor:T.pale,borderRadius:17,padding:15,flexDirection:'row',gap:12,borderWidth:1,borderColor:T.border},
+ noticeText:{fontFamily:'Mulish_400Regular',fontSize:12,lineHeight:19,color:T.muted,flex:1},
+ linkCard:{minHeight:54,backgroundColor:T.white,borderRadius:16,borderWidth:1,borderColor:T.border,flexDirection:'row',alignItems:'center',padding:13,gap:12},
+ linkTitle:{color:T.ink,fontFamily:'Mulish_700Bold',fontSize:14},cardTitle:{fontFamily:'Poppins_700Bold',color:T.ink,fontSize:17},
+ footnote:{fontFamily:'Mulish_400Regular',color:T.muted,fontSize:11,lineHeight:18}
+});}
