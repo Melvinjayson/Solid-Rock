@@ -192,7 +192,14 @@ function AppContent() {
           <PrimaryButton label="Contact the church  ↗" onPress={openOfficialSite}/><Text style={s.disclaimer}>Do not enter urgent or highly sensitive information here. For immediate danger, contact local emergency services.</Text></Surface></>}
       {page === 'Groups' && <><Text style={s.pageIntro}>Find a place to grow, serve and build meaningful relationships.</Text>
         <Surface><Text style={s.cardTitle}>Life together</Text><Text style={s.body}>Connect with ministries, fellowship gatherings and outreach initiatives. For current group availability and volunteer opportunities, contact the church.</Text><PrimaryButton label="Explore community  ↗" onPress={openOfficialSite}/></Surface></>}
-      {page === 'About' && <><Text style={s.pageIntro}>A welcoming community of faith in Dublin.</Text><Surface><Text style={s.cardTitle}>{CHURCH_NAME}</Text><Text style={s.body}>Visit the church's website for current directions, service times, ministries and contact information.</Text><PrimaryButton label="Visit solidrockdublin.org  ↗" onPress={openOfficialSite}/></Surface></>}
+      {page === 'About' && <><Text style={s.pageIntro}>Loving God, loving others and serving the world.</Text>
+        <Surface><Tag>PLAN YOUR VISIT</Tag><Text style={s.cardTitle}>{CHURCH_NAME}</Text><Text style={s.body}>{SUNDAY_SERVICE}</Text><Text style={s.body}>{CONTACT_ADDRESS}</Text>
+          <PrimaryButton label="Plan your visit  ↗" onPress={()=>{void Linking.openURL(VISIT_URL);}}/>
+          <PrimaryButton label="Get directions  ↗" outline onPress={()=>{void Linking.openURL('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(CONTACT_ADDRESS));}}/></Surface>
+        <Surface><Text style={s.cardTitle}>Get in touch</Text><Text style={s.body}>Questions about visiting, ministries or support? The church can help.</Text>
+          <PrimaryButton label="Email the church  ↗" outline onPress={()=>{void Linking.openURL('mailto:admin@solidrockdublin.org');}}/>
+          <PrimaryButton label="Call the church  ↗" outline onPress={()=>{void Linking.openURL('tel:+35314549788');}}/></Surface>
+      </>}
       {page === 'Privacy' && <><Text style={s.pageIntro}>Your information should be treated with care.</Text>
         <Surface><Text style={s.cardTitle}>What this preview stores</Text><Text style={s.body}>Saved interests, bookmarks, reading progress and your theme preference may be stored on your device. No payment data is collected in this preview.</Text><Text style={s.body}>Account details, registration, prayer requests and care records require an explicitly configured Solid Rock database. The current public preview is not connected to one.</Text></Surface>
         <Surface><Text style={s.cardTitle}>Your choices and support</Text><Text style={s.body}>A church-approved privacy notice, deletion workflow and data retention schedule are required before inviting real members to share personal data.</Text><PrimaryButton label="Contact Solid Rock  ↗" onPress={()=>{void Linking.openURL('mailto:admin@solidrockdublin.org');}}/>
