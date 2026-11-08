@@ -25,6 +25,7 @@ test('public media endpoint uses verified channel RSS without credentials',async
   const urls=[];
   global.fetch=async(url)=>{
     urls.push(String(url));
+    if(String(url)==='https://solidrockdublin.org/') return {ok:true,text:async()=>`<article class="group"><a href="https://solidrockdublin.org/devotional/day-2-repentance-and-surrender"><img alt="Day 2 – Repentance and Surrender"/></a></article>`};
     if(!String(url).startsWith('https://www.youtube.com/feeds/videos.xml?channel_id=UCM6SGgWXyUDlCaZ8iYnIuKQ'))throw Error('Unexpected external request');
     return {ok:true,text:async()=>`<feed><entry><yt:videoId>3l_Ar5UrrVo</yt:videoId><title>Solid Rock Sunday worship</title><published>2026-11-08T10:02:18+00:00</published><media:thumbnail url="https://i.ytimg.com/vi/3l_Ar5UrrVo/hqdefault.jpg"/></entry></feed>`};
   };
@@ -38,5 +39,7 @@ test('public media endpoint uses verified channel RSS without credentials',async
   assert.equal(res.body.activeLive,null,'RSS must never claim a video is LIVE');
   assert.equal(res.body.instagram.length,0,'No invented Instagram posts');
   assert.ok(!JSON.stringify(res.body).includes('access_token'));
-  assert.equal(urls.length,1);
+  assert.equal(urls.length,2);
+  assert.equal(res.body.news[0].title,'Day 2 – Repentance and Surrender');
+  assert.equal(res.body.sources.website,'homepage');
 });
