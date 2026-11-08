@@ -37,6 +37,8 @@ test('public media endpoint uses verified channel RSS without credentials',async
   assert.equal(res.body.sources.youtube,'rss');
   assert.equal(res.body.videos[0].id,'3l_Ar5UrrVo');
   assert.equal(res.body.activeLive,null,'RSS must never claim a video is LIVE');
+  assert.equal(res.body.clips.length,3);
+  assert.equal(res.body.clips[0].id,'SEDV0Vola8g');
   assert.equal(res.body.instagram.length,0,'No invented Instagram posts');
   assert.ok(!JSON.stringify(res.body).includes('access_token'));
   assert.equal(urls.length,2);
