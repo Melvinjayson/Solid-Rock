@@ -1,9 +1,11 @@
+// Visual tokens adapted from the Reveta OS brand reference palette (RV-DEC-2026-042).
+// Solid Rock retains its own logo, product identity and content; no private assets are embedded.
 export const theme = {
-  ink: '#16243B',
+  ink: '#101C49',
   muted: '#63718A',
-  brand: '#253D78',
-  blue: '#3559AC',
-  pale: '#EDF2FB',
+  brand: '#101C49',
+  blue: '#247AB7',
+  pale: '#EAF4FC',
   gold: '#C99E59',
   background: '#F6F8FC',
   white: '#FFFFFF',
