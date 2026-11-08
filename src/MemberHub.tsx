@@ -35,6 +35,7 @@ function safeMessage(e:unknown){return e instanceof Error?e.message:'Something w
 async function officialLink(){try{await Linking.openURL('https://solidrockdublin.org/');}catch{Alert.alert('Website unavailable','Visit solidrockdublin.org directly.');}}
 
 export default function MemberHub() {
+  styles=makeStyles();
   const [section,setSection]=useState<Section>('Discover');
   const [data,setData]=useState<PublicData>(blank);
   const [busy,setBusy]=useState(false);
@@ -226,21 +227,22 @@ export default function MemberHub() {
     </>}
   </View>;
 }
-const styles=StyleSheet.create({
+let styles:ReturnType<typeof makeStyles>;
+function makeStyles(){return StyleSheet.create({
   wrap:{gap:14,paddingBottom:24},
   title:{fontSize:29,fontWeight:'800',color:T.ink,letterSpacing:-0.8},
   sectionNav:{gap:7,paddingVertical:7},
   pill:{paddingHorizontal:13,paddingVertical:10,borderRadius:18,backgroundColor:T.pale},
   selected:{backgroundColor:T.brand},
   pillText:{fontWeight:'700',fontSize:12,color:T.brand},
-  selectedText:{color:T.white},
+  selectedText:{color:T.background},
   card:{borderWidth:1,borderColor:T.border,borderRadius:18,padding:16,gap:10,backgroundColor:T.white},
   cardTitle:{fontSize:19,fontWeight:'800',color:T.ink},
   body:{color:T.muted,fontSize:13,lineHeight:21},
   item:{gap:7,borderTopColor:T.border,borderTopWidth:1,paddingTop:12,paddingBottom:6},
   itemTitle:{fontSize:15,fontWeight:'700',color:T.ink},
   cta:{backgroundColor:T.brand,padding:13,borderRadius:12,marginTop:4,alignItems:'center'},
-  ctaText:{color:T.white,fontSize:13,fontWeight:'700'},
+  ctaText:{color:T.background,fontSize:13,fontWeight:'700'},
   disabled:{opacity:0.45},
   input:{backgroundColor:T.background,borderColor:T.border,borderWidth:1,borderRadius:12,color:T.ink,fontSize:14,padding:13},
   notice:{backgroundColor:T.pale,padding:14,borderRadius:14,gap:6},
@@ -249,4 +251,5 @@ const styles=StyleSheet.create({
   checkRow:{flexDirection:'row',gap:12,alignItems:'center',paddingVertical:10},
   check:{fontSize:20,color:T.blue},
   checkLabel:{color:T.ink,fontSize:13,flex:1},
-});
+});}
+styles=makeStyles();
