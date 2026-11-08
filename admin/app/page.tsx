@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 
 type Module = 'announcements' | 'events' | 'sermons' | 'groups' | 'volunteer_opportunities' | 'pastoral_slots';
 type Form = { title:string; body:string; description:string; speaker:string; passage:string; series:string; media_url:string; starts_at:string; ends_at:string; venue:string; capacity:string; location_label:string; published:boolean };
@@ -114,6 +115,7 @@ export default function Admin() {
     !canSee?<div className="panel" style={{marginTop:24}}><h2>Staff access required</h2><p className="sub">Your account is authenticated but has no approved staff role. Role grants require separate identity verification and trusted provisioning.</p></div>:
     <div className="grid"><nav className="nav" aria-label="Administration modules">
       {Object.entries(labels).map(([key,label])=><button key={key} onClick={()=>{setModule(key as Module);setForm(empty);setNotice('');setError('');}} className={module===key?'active':''}>{label}</button>)}
+      {roles.some(r=>['pastor','super_admin'].includes(r))&&<Link href="/moderation" className="btn" style={{display:'block',textDecoration:'none',padding:'14px 12px',borderRadius:12,fontSize:13}}>Community moderation</Link>}
     </nav>
     <section className="panel"><h2>{labels[module]}</h2><p className="sub">{canWrite?'Your approved staff role permits updates in this module.':'Read-only for your current staff permissions.'}</p>
       {canWrite&&<div className="form">
