@@ -17,3 +17,19 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Typecheck
         run: npm run typecheck
+
+  admin-typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install admin dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck admin
+        run: npm run typecheck
