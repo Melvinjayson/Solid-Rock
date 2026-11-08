@@ -4,11 +4,11 @@ import { mkdirSync } from 'node:fs';
 const folder = 'test-results/screenshots';
 test.beforeEach(async ({page},testInfo) => {
   await page.goto('/');
-  await expect(page.getByText(/WELCOME HOME|Welcome to/).first()).toBeVisible();
+  await expect(page.getByText(/WELCOME HOME|Faith beyond/).first()).toBeVisible();
   if(testInfo.title.includes('first-run onboarding'))return;
   const skip=page.getByRole('button',{name:'Skip welcome guide'});
   if(await skip.count())await skip.click();
-  await expect(page.getByText(/Welcome to/).first()).toBeVisible();
+  await expect(page.getByText(/Faith beyond/).first()).toBeVisible();
 });
 test('official content, dark default and persistent theme toggle', async ({page},testInfo) => {
   await expect(page.getByText('Solid Rock Dublin').first()).toBeVisible();
