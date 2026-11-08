@@ -5,8 +5,8 @@ export type ThemeMode = 'dark' | 'light';
 export const palettes = {
   dark: {
     ink:'#F8F4E9', muted:'#C0B5A5', brand:'#C9A24A', blue:'#E6BF6B',
-    pale:'#29231C', gold:'#C9A24A', background:'#100F0D', white:'#1D1915',
-    border:'#3D352B', green:'#65C3AA', radius:18,
+    pale:'#1B1916', gold:'#C9A24A', background:'#050505', white:'#121212',
+    border:'#39332C', green:'#65C3AA', radius:18,
   },
   light: {
     ink:'#20160F', muted:'#655A4C', brand:'#5B3F16', blue:'#80601F',
