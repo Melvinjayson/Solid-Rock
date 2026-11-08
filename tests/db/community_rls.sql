@@ -111,3 +111,28 @@ begin
 end $$;
 reset role;
 select 'Community auth, isolation, posting, blocks and moderation: PASS' as result;
+
+-- Re-enable the prayer room and test real reply/acknowledgement operations.
+reset role;
+update public.community_messages set created_at=now()-interval '2 minutes'
+where channel_id=(select id from public.community_channels where slug='prayer-circle');
+set role authenticated;
+set request.jwt.claim.sub='00000000-0000-4000-8000-000000000103';
+select public.community_set_lock(id,false) from public.community_channels where slug='prayer-circle';
+set request.jwt.claim.sub='00000000-0000-4000-8000-000000000101';
+do $$
+declare cid uuid; mid uuid; rid uuid; counts bigint; active boolean;
+begin
+ select id into cid from public.community_channels where slug='prayer-circle';
+ select id into mid from public.community_messages where author_id=auth.uid() and channel_id=cid limit 1;
+ rid:=public.community_reply(cid,mid,'Thank you for praying together.');
+ if rid is null then raise exception 'Thread reply failed';end if;
+ active:=public.community_toggle_prayer(mid);
+ if active is distinct from true then raise exception 'Prayer support was not added';end if;
+ select support_count into counts from public.community_prayer_counts(cid) where message_id=mid;
+ if counts<>1 then raise exception 'Prayer acknowledgement count incorrect';end if;
+ active:=public.community_toggle_prayer(mid);
+ if active is distinct from false then raise exception 'Prayer support was not removed';end if;
+end $$;
+reset role;
+select 'Threaded replies and privacy-preserving prayer count: PASS' as result;
