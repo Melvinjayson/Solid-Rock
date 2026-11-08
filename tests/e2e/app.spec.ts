@@ -190,3 +190,18 @@ test('notifications inbox and preference toggles do not claim active push integr
  await expect(page.getByText(/No marketing notifications/)).toBeVisible({timeout:5000}).catch(()=>{});
  await page.getByRole('button',{name:'Back'}).click().catch(()=>{});
 });
+
+test('inclusive personal faith journeys save progress without requiring membership',async ({page})=>{
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/Your faith journey/}).click();
+ await expect(page.getByText('Your faith journey.')).toBeVisible();
+ await expect(page.getByText(/No scores, streaks or comparisons/)).toBeVisible();
+ await page.getByRole('button',{name:'Faith at home'}).click();
+ await expect(page.getByText('Faith at home',{exact:true}).first()).toBeVisible();
+ await page.getByRole('checkbox',{name:'Mark reflection 1 complete'}).click();
+ await expect(page.getByText('1 of 7 reflections marked complete')).toBeVisible();
+ await page.reload();
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/Your faith journey/}).click();
+ await expect(page.getByText('1 of 7 reflections marked complete')).toBeVisible();
+});
