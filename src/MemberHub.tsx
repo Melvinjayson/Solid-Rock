@@ -10,6 +10,7 @@ import {
   type EventRegistration, type PastoralBooking,
 } from './backend';
 import { theme as T } from './theme';
+import AppIcon,{type IconName} from './AppIcon';
 
 type Section = 'Discover' | 'Account' | 'Events' | 'Community' | 'Care' | 'Giving' | 'Reading';
 const sections: Section[] = ['Discover','Account','Events','Community','Care','Giving','Reading'];
@@ -23,11 +24,15 @@ const plans=[
 const blank: PublicData={events:[],sermons:[],announcements:[],groups:[],opportunities:[]};
 
 function Card({title,children}:{title:string;children:React.ReactNode}) {
-  return <View style={styles.card}><Text style={styles.cardTitle}>{title}</Text>{children}</View>;
+  const icon:IconName=/prayer|pastoral/i.test(title)?'prayer':/giving/i.test(title)?'give':/event/i.test(title)?'calendar':/group|fellowship/i.test(title)?'people':/reading|plan/i.test(title)?'book':/profile|sign in/i.test(title)?'shield':'sparkles';
+  return <View style={styles.card}><View style={styles.cardHeading}>
+    <View style={styles.cardIcon}><AppIcon name={icon} color={T.gold} size={19}/></View>
+    <Text style={styles.cardTitle}>{title}</Text>
+  </View>{children}</View>;
 }
 function CTA({title,onPress,disabled=false}:{title:string;onPress:()=>void;disabled?:boolean}) {
   return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress}
-    style={[styles.cta,disabled&&styles.disabled]}><Text style={styles.ctaText}>{title}</Text></Pressable>;
+    style={[styles.cta,disabled&&styles.disabled]}><Text style={styles.ctaText}>{title}</Text><AppIcon name="arrow" color="#16110A" size={17}/></Pressable>;
 }
 function Info({children}:{children:React.ReactNode}){return <Text style={styles.body}>{children}</Text>;}
 function fmt(date:string){try{return new Date(date).toLocaleString('en-IE',{dateStyle:'medium',timeStyle:'short'});}catch{return date;}}
@@ -146,8 +151,8 @@ export default function MemberHub() {
   }
 
   return <View style={styles.wrap}>
-    <Text style={styles.title}>Church community</Text>
-    <Info>Explore public updates and connect with verified church services when available.</Info>
+    <Text style={styles.kicker}>YOUR CHURCH ACCOUNT</Text><Text style={styles.title}>Stay connected.</Text>
+    <Info>Find church updates, manage your reading, and connect through verified member services when available.</Info>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionNav}>
       {sections.map(x=><Pressable accessibilityRole="tab" accessibilityState={{selected:section===x}} key={x} onPress={()=>{
         setSection(x);setError(null);if((x==='Giving'||x==='Care'||x==='Events')&&userId)void loadPrivate();
@@ -230,19 +235,22 @@ export default function MemberHub() {
 let styles:ReturnType<typeof makeStyles>;
 function makeStyles(){return StyleSheet.create({
   wrap:{gap:14,paddingBottom:24},
-  title:{fontSize:29,fontWeight:'800',color:T.ink,letterSpacing:-0.8},
+  kicker:{fontSize:10,fontFamily:'Mulish_700Bold',color:T.gold,letterSpacing:2},
+  title:{fontSize:29,fontFamily:'Poppins_700Bold',color:T.ink,letterSpacing:-0.8},
   sectionNav:{gap:7,paddingVertical:7},
   pill:{paddingHorizontal:13,paddingVertical:10,borderRadius:18,backgroundColor:T.pale},
   selected:{backgroundColor:T.brand},
   pillText:{fontWeight:'700',fontSize:12,color:T.brand},
   selectedText:{color:T.background},
-  card:{borderWidth:1,borderColor:T.border,borderRadius:18,padding:16,gap:10,backgroundColor:T.white},
-  cardTitle:{fontSize:19,fontWeight:'800',color:T.ink},
-  body:{color:T.muted,fontSize:13,lineHeight:21},
+  card:{borderWidth:1,borderColor:T.border,borderRadius:23,padding:18,gap:13,backgroundColor:T.white},
+  cardHeading:{flexDirection:'row',alignItems:'center',gap:11},
+  cardIcon:{width:37,height:37,borderRadius:13,backgroundColor:T.pale,alignItems:'center',justifyContent:'center'},
+  cardTitle:{fontSize:17,fontFamily:'Poppins_700Bold',color:T.ink,flex:1},
+  body:{color:T.muted,fontSize:13,lineHeight:21,fontFamily:'Mulish_400Regular'},
   item:{gap:7,borderTopColor:T.border,borderTopWidth:1,paddingTop:12,paddingBottom:6},
   itemTitle:{fontSize:15,fontWeight:'700',color:T.ink},
-  cta:{backgroundColor:T.brand,padding:13,borderRadius:12,marginTop:4,alignItems:'center'},
-  ctaText:{color:T.background,fontSize:13,fontWeight:'700'},
+  cta:{backgroundColor:T.gold,padding:14,borderRadius:15,marginTop:4,alignItems:'center',justifyContent:'center',flexDirection:'row',gap:9},
+  ctaText:{color:'#16110A',fontSize:13,fontFamily:'Mulish_700Bold'},
   disabled:{opacity:0.45},
   input:{backgroundColor:T.background,borderColor:T.border,borderWidth:1,borderRadius:12,color:T.ink,fontSize:14,padding:13},
   notice:{backgroundColor:T.pale,padding:14,borderRadius:14,gap:6},
