@@ -5,8 +5,10 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
 const anon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
-export const cloudEnabled = Boolean(url && anon);
-export const churchDb: SupabaseClient | null = url && anon
+// Backend access is opt-in: credentials alone must never activate member workflows.
+const explicitlyEnabled = process.env.EXPO_PUBLIC_CHURCH_BACKEND_ENABLED === 'true';
+export const cloudEnabled = Boolean(url && anon && explicitlyEnabled);
+export const churchDb: SupabaseClient | null = url && anon && explicitlyEnabled
   ? createClient(url, anon, {
       auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
     })
