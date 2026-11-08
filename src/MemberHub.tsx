@@ -11,6 +11,7 @@ import {
 } from './backend';
 import { theme as T } from './theme';
 import AppIcon,{type IconName} from './AppIcon';
+import {isSixDigitOtp,normalizeEmail} from './authValidation';
 
 type Section = 'Discover' | 'Account' | 'Events' | 'Community' | 'Care' | 'Giving' | 'Reading';
 const sections: Section[] = ['Discover','Account','Events','Community','Care','Giving','Reading'];
@@ -99,8 +100,8 @@ export default function MemberHub() {
     }
   }
   async function signIn() {
-    const target=email.trim();
-    if(!/^\S+@\S+\.\S+$/.test(target)){Alert.alert('Enter a valid email address');return;}
+    const target=normalizeEmail(email);
+    if(!target){Alert.alert('Enter a valid email address');return;}
     if(!churchDb){Alert.alert('Not configured','Membership sign-in requires the church Supabase project.');return;}
     await run(async()=>{
       const {error:e}=await churchDb!.auth.signInWithOtp({email:target,options:{shouldCreateUser:true}});
@@ -109,9 +110,9 @@ export default function MemberHub() {
   }
   async function verifyCode() {
     if(!churchDb)return;
-    if(!/^\\d{6}$/.test(otp.trim())){Alert.alert('Enter the six-digit code from your email');return;}
+    if(!isSixDigitOtp(otp)){Alert.alert('Enter the six-digit code from your email');return;}
     await run(async()=>{
-      const {error:e}=await churchDb!.auth.verifyOtp({email:email.trim(),token:otp.trim(),type:'email'});
+      const {error:e}=await churchDb!.auth.verifyOtp({email:normalizeEmail(email)||'',token:otp.trim(),type:'email'});
       if(e)throw e;
       setOtp('');
     },'You are signed in.');
@@ -190,7 +191,7 @@ export default function MemberHub() {
         <TextInput accessibilityLabel="Email address" autoCapitalize="none" keyboardType="email-address" style={styles.input} value={email} onChangeText={setEmail} placeholder="Email address"/>
         <CTA title="Send sign-in code" onPress={()=>void signIn()} disabled={!cloudEnabled||busy}/>
         <TextInput accessibilityLabel="Six-digit sign-in code" keyboardType="number-pad" maxLength={6} style={styles.input} value={otp} onChangeText={setOtp} placeholder="Six-digit email code"/>
-        <CTA title="Verify code and sign in" onPress={()=>void verifyCode()} disabled={!cloudEnabled||busy||otp.trim().length!==6}/>
+        <CTA title="Verify code and sign in" onPress={()=>void verifyCode()} disabled={!cloudEnabled||busy||!isSixDigitOtp(otp)}/>
       </>}
       <Info>Member records are isolated from Liberty-TV. Signing in does not automatically import a ChMeetings account.</Info>
     </Card>}
