@@ -54,7 +54,7 @@ export function sanitizeFeed(input:unknown):MediaFeed{
   const age=Date.now()-Date.parse(fetchedAt);
   // Never keep a stale LIVE badge when offline, even if a previously cached feed marked it active.
   return {...fallback,fetchedAt,
-    activeLive:live&&Number.isFinite(age)&&age>=0&&age<5*60*1000?live:null,
+    activeLive:live&&Number.isFinite(age)&&age>=0&&age<35*60*1000?live:null,
     videos:videos(src.videos),clips:videos(src.clips),instagram,news,
     playlists:list.length?list:OFFICIAL_PLAYLISTS,
     sources:{youtube:src.sources?.youtube||'unavailable',instagram:src.sources?.instagram||'unavailable',website:src.sources?.website||'unavailable'},
