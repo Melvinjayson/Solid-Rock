@@ -153,10 +153,40 @@ async function instagramFeed(result) {
     console.warn('Instagram feed unavailable:', err instanceof Error ? err.message : 'unknown');
   }
 }
+async function homepageDevotionals(result) {
+  try {
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 6500);
+    let html;
+    try {
+      const response=await fetch('https://solidrockdublin.org/',{signal:controller.signal});
+      if(!response.ok)throw Error('Church website HTTP '+response.status);
+      html=(await response.text()).slice(0,300000);
+    } finally { clearTimeout(timer); }
+    // Only accept public devotional links on the church's exact HTTPS domain.
+    const matches=[...html.matchAll(/<article\b[^>]*>([\s\S]*?)<\/article>/g)].slice(0,25);
+    const posts=[];
+    for (const match of matches) {
+      const block=match[1];
+      const link=/href="(https:\/\/solidrockdublin\.org\/devotional\/[a-z0-9-]+)"/.exec(block);
+      if (!link || posts.some(p=>p.url===link[1])) continue;
+      const alt=/<img\b[^>]*alt="([^"]+)"/.exec(block);
+      const heading=/<h3\b[^>]*>[\s\S]*?<a\b[^>]*>([\s\S]*?)<\/a>/.exec(block);
+      const title=safeText((heading?.[1]||alt?.[1]||'Church devotional').replace(/<[^>]+>/g,''),180);
+      posts.push({id:link[1].split('/').pop(),title,
+        summary:'21 Days of Prayer and Fasting · Solid Rock Dublin',
+        url:link[1],publishedAt:null});
+    }
+    result.news=posts.slice(0,8);
+    result.sources.website=posts.length?'homepage':'unavailable';
+  }catch(err){
+    result.sources.website='unavailable';
+    console.warn('Church website content unavailable:',err instanceof Error?err.message:'unknown');
+  }
+}
 async function websiteFeed(result) {
   // Only an explicitly approved church-owned RSS/Atom URL may be queried.
   const rss = process.env.CHURCH_NEWS_RSS_URL;
-  if (!rss) return;
+  if (!rss) return homepageDevotionals(result);
   try {
     const parsed = new URL(rss);
     if (parsed.protocol !== 'https:' || parsed.hostname !== 'solidrockdublin.org') throw Error('RSS domain not approved');
@@ -183,7 +213,8 @@ async function websiteFeed(result) {
     result.sources.website = 'ready';
   } catch (err) {
     result.sources.website = 'unavailable';
-    console.warn('Church website RSS unavailable:', err instanceof Error ? err.message : 'unknown');
+    console.warn('Church website RSS unavailable, trying homepage:', err instanceof Error ? err.message : 'unknown');
+    await homepageDevotionals(result);
   }
 }
 
