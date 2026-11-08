@@ -33,3 +33,28 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Typecheck admin
         run: npm run typecheck
+
+  web-uat-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install browser dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Run real-browser UAT smoke and capture screenshots
+        run: npm run test:e2e
+      - name: Upload UAT screenshots and browser traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: solid-rock-uat-screenshots
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
