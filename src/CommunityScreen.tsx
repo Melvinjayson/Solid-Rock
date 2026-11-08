@@ -30,7 +30,7 @@ export default function CommunityScreen({onAccount,onVisit}:Props){
  const [prayerCounts,setPrayerCounts]=useState<Record<string,number>>({});
  const [filter,setFilter]=useState<'all'|'prayer'|'discussion'|'study'>('all');
  const styles=makeStyles();
- const active=channels.find(x=>x.id===current)||null;
+ const active=(cloudEnabled?channels:COMMUNITY_PREVIEW.map((x,i)=>({...x,id:'preview-'+i,is_locked:false}))).find(x=>x.id===current)||null;
  const signedIn=Boolean(user);
  const joined=Boolean(current&&membership.includes(current));
  const load=useCallback(async()=>{
