@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useFonts } from 'expo-font';
 import { Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { Mulish_400Regular, Mulish_700Bold } from '@expo-google-fonts/mulish';
@@ -11,6 +11,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CHURCH_NAME, CHURCH_URL, INTRO, sampleEvents, sampleMessages, SUNDAY_SERVICE, CONTACT_ADDRESS, VISIT_URL, MINISTRIES } from './src/content';
 import { theme as T, setActiveTheme, churchAssets, type ThemeMode } from './src/theme';
 import MemberHub from './src/MemberHub';
+import YouTubePlayer from './src/YouTubePlayer';
+import { loadMediaFeed, YOUTUBE_CHANNEL, YOUTUBE_LIVE, INSTAGRAM_CHANNEL, OFFICIAL_PLAYLISTS, type MediaFeed } from './src/mediaFeed';
 import { cloudEnabled, getPublicContent } from './src/backend';
 
 type Tab = 'Home' | 'Watch' | 'Events' | 'Give' | 'More';
@@ -41,6 +43,13 @@ function PrimaryButton({ label, onPress, outline = false }: { label: string; onP
 function Surface({ children }: { children: React.ReactNode }) {
   return <View style={s.surface}>{children}</View>;
 }
+function MinistryImage({asset,name}:{asset:keyof typeof churchAssets;name:string}){
+  const [failed,setFailed]=useState(false);
+  return failed?<View style={{width:'100%',height:155,backgroundColor:T.pale,borderRadius:12,justifyContent:'center',alignItems:'center'}}><Text style={{color:T.muted}}>Solid Rock · {name}</Text></View>:
+    <Image source={{uri:churchAssets[asset]}} onError={()=>setFailed(true)} resizeMode="cover"
+      accessibilityLabel={name+' ministry photograph from the official church website'}
+      style={{width:'100%',height:155,borderRadius:12}}/>;
+}
 function Header({ onAbout, mode, toggleMode }: { onAbout: () => void; mode:ThemeMode; toggleMode:()=>void }) {
   const [logoFailed,setLogoFailed]=useState(false);
   useEffect(()=>setLogoFailed(false),[mode]);
@@ -62,6 +71,17 @@ function AppContent() {
   const [preferences, setPreferences] = useState<Preferences>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const scrollRef=useRef<ScrollView>(null);
+  const [media,setMedia]=useState<MediaFeed|null>(null);
+  const [mediaCached,setMediaCached]=useState(false);
+  const [mediaBusy,setMediaBusy]=useState(false);
+  const [selectedVideo,setSelectedVideo]=useState<string|null>(null);
+  const [selectedPlaylist,setSelectedPlaylist]=useState<string>(OFFICIAL_PLAYLISTS[0].id);
+  const [mediaView,setMediaView]=useState<'live'|'videos'|'clips'|'playlists'>('live');
+  async function refreshMedia(){setMediaBusy(true);try{const v=await loadMediaFeed();setMedia(v.feed);setMediaCached(v.fromCache);}finally{setMediaBusy(false);}}
+  useEffect(()=>{void refreshMedia();},[]);
+  function chooseVideo(id:string){setSelectedVideo(id);setSelectedPlaylist('');scrollRef.current?.scrollTo({y:0,animated:true});}
+  function choosePlaylist(id:string){setSelectedVideo(null);setSelectedPlaylist(id);scrollRef.current?.scrollTo({y:0,animated:true});}
   const [prayer, setPrayer] = useState('');
   const [confirmErase,setConfirmErase]=useState(false);
   const [remote, setRemote] = useState<Awaited<ReturnType<typeof getPublicContent>> | null>(null);
@@ -111,7 +131,19 @@ function AppContent() {
       <Surface><Tag>WEEKLY WORSHIP</Tag><Text style={s.cardTitle}>{SUNDAY_SERVICE}</Text><Text style={s.body}>{CONTACT_ADDRESS}</Text><PrimaryButton label="Plan a visit  ↗" outline onPress={()=>{void Linking.openURL(VISIT_URL);}}/></Surface>
       <SectionHeading title="Life at Solid Rock"/>
       <Image source={{uri:churchAssets.community}} style={{width:'100%',height:180,borderRadius:18}} resizeMode="cover" accessibilityLabel="Solid Rock Dublin community photography"/>
-      {MINISTRIES.map(m=><Surface key={m.name}><Text style={s.cardTitle}>{m.name}</Text><Text style={s.body}>{m.detail}</Text><PrimaryButton label="Learn more  ↗" outline onPress={()=>{void Linking.openURL(m.url);}}/></Surface>)}
+      {MINISTRIES.map(m=><Surface key={m.name}><MinistryImage asset={m.image} name={m.name}/><Text style={s.cardTitle}>{m.name}</Text><Text style={s.body}>{m.detail}</Text><PrimaryButton label="Learn more  ↗" outline onPress={()=>{void Linking.openURL(m.url);}}/></Surface>)}
+      <SectionHeading title="From our community" action="Instagram" onAction={()=>{void Linking.openURL(INSTAGRAM_CHANNEL);}}/>
+      {media?.instagram?.length ? media.instagram.slice(0,3).map(p=><Surface key={p.id}>
+        {p.thumbnail&&<Image source={{uri:p.thumbnail}} accessibilityLabel="Solid Rock Centre Instagram post" resizeMode="cover" style={{height:180,width:'100%',borderRadius:12}}/>}
+        <Tag>{p.type==='REELS'?'REEL':'INSTAGRAM'}</Tag>
+        <Text style={s.body} numberOfLines={4}>{p.caption||'Latest update from Solid Rock Centre'}</Text>
+        <PrimaryButton outline label="View original post  ↗" onPress={()=>{void Linking.openURL(p.permalink);}}/>
+      </Surface>) : <Surface><Text style={s.cardTitle}>Follow Solid Rock Centre</Text>
+        <Text style={s.body}>See official posts, reels and community photos on Instagram. A church-authorised feed will appear here when connected.</Text>
+        <PrimaryButton label="Open Instagram  ↗" outline onPress={()=>{void Linking.openURL(INSTAGRAM_CHANNEL);}}/></Surface>}
+      {media?.news?.length? <><SectionHeading title="From the church website"/>{media.news.slice(0,3).map(n=>
+        <Surface key={n.id}><Text style={s.cardTitle}>{n.title}</Text><Text style={s.body}>{n.summary}</Text><PrimaryButton label="Read church update  ↗" outline onPress={()=>{void Linking.openURL(n.url);}}/></Surface>
+      )}</>:null}
       <SectionHeading title="Grow in the Word" action="Explore" onAction={() => goTab('Watch')}/>
       <Surface><Text style={s.kicker}>REFLECTION</Text><Text style={s.cardTitle}>Rooted in faith</Text><Text style={s.body}>A short reading guide to help you reflect during the week.</Text><Pressable onPress={() => goPage('Bible')} accessibilityRole="button"><Text style={s.action}>Open Bible resources →</Text></Pressable></Surface>
     </>;
@@ -121,7 +153,65 @@ function AppContent() {
     const filtered = sampleMessages.filter(m => (m.title + m.description + m.passage).toLowerCase().includes(search.toLowerCase()));
     return <>
       <Text style={s.pageTitle}>Watch & grow</Text><Text style={s.pageIntro}>Worship, teaching and Scripture for every day.</Text>
-      <View style={s.mediaHero}><Text style={s.livePill}>● WORSHIP ONLINE</Text><Text style={s.mediaTitle}>Join our community{ '\n' }in worship</Text><Text style={s.mediaSub}>Official services and the latest messages are available through the church.</Text><PrimaryButton label="Visit official media  ↗" onPress={openOfficialSite}/></View>
+      <View style={s.mediaHero}>
+        <Text style={s.livePill}>{media?.activeLive?'● LIVE NOW':'● SOLID ROCK CENTRE TV'}</Text>
+        <Text style={s.mediaTitle}>{media?.activeLive?'Watch Sunday service live':'Worship, wherever you are'}</Text>
+        <Text style={s.mediaSub}>{media?.activeLive?'Streaming now from the official Solid Rock Centre YouTube channel.':'Watch official messages, shorts and playlists directly in the app.'}</Text>
+        <PrimaryButton label={media?.activeLive?'Watch on YouTube  ↗':'Open channel  ↗'} onPress={()=>{void Linking.openURL(media?.activeLive?.url||YOUTUBE_CHANNEL);}}/>
+      </View>
+      <View style={{flexDirection:'row',gap:7,flexWrap:'wrap'}}>
+        {(['live','videos','clips','playlists'] as const).map(v=><Pressable key={v}
+          accessibilityRole="button" accessibilityState={{selected:mediaView===v}}
+          style={{backgroundColor:mediaView===v?T.brand:T.pale,borderRadius:14,paddingVertical:10,paddingHorizontal:13}}
+          onPress={()=>setMediaView(v)}>
+          <Text style={{color:mediaView===v?T.background:T.ink,fontSize:12,fontWeight:'800'}}>{v==='live'?'Live':v==='videos'?'Messages':v==='clips'?'Short clips':'Playlists'}</Text>
+        </Pressable>)}
+      </View>
+      <Surface>
+        <Tag>{selectedVideo?'NOW PLAYING':media?.activeLive?'CHURCH LIVESTREAM':'CHURCH VIDEO'}</Tag>
+        {selectedVideo?<YouTubePlayer key={selectedVideo} videoId={selectedVideo}/>:
+          media?.activeLive?<YouTubePlayer key={media.activeLive.id} videoId={media.activeLive.id}/>:
+          <YouTubePlayer key={selectedPlaylist||OFFICIAL_PLAYLISTS[0].id} playlistId={selectedPlaylist||OFFICIAL_PLAYLISTS[0].id}/>}
+        <Text style={s.body}>{selectedVideo?'Playing an official YouTube video.':media?.activeLive?
+          'Live stream detected from the church channel.':
+          'No live broadcast is confirmed right now. Browse an official playlist or check the Live channel.'}</Text>
+        {!media?.activeLive&&<PrimaryButton outline label="Check for live service  ↗"
+          onPress={()=>{void Linking.openURL(YOUTUBE_LIVE);}}/>}
+        <PrimaryButton outline label={mediaBusy?'Checking feed…':'Refresh latest videos'} onPress={()=>{void refreshMedia();}}/>
+        {mediaCached&&<Text style={s.disclaimer}>Showing previously available channel information. For live updates, the church media sync needs to be connected.</Text>}
+        <Text style={s.disclaimer}>YouTube playback is hosted by YouTube, depends on internet access and may be unavailable when the creator disables embedding.</Text>
+      </Surface>
+      {mediaView==='live'&&<Surface><Text style={s.cardTitle}>Sunday worship · 11:00 am</Text>
+        <Text style={s.body}>Join online from the church's verified YouTube channel or gather at Goldenbridge, Inchicore.</Text>
+        <PrimaryButton outline label="Official live channel  ↗" onPress={()=>{void Linking.openURL(YOUTUBE_LIVE);}}/>
+      </Surface>}
+      {mediaView==='videos'&&<>
+        <SectionHeading title="Recent church messages"/>
+        {(media?.videos||[]).length?media!.videos.map(v=><Pressable key={v.id} accessibilityRole="button"
+          accessibilityLabel={'Play '+v.title} onPress={()=>chooseVideo(v.id)} style={s.surface}>
+          {v.thumbnail&&<Image source={{uri:v.thumbnail}} style={{width:'100%',aspectRatio:16/9,borderRadius:12}} resizeMode="cover"/>}
+          <Text style={s.cardTitle}>{v.title}</Text>
+          <Text style={s.meta}>{v.publishedAt?new Date(v.publishedAt).toLocaleDateString('en-IE'):''}</Text>
+          <Text style={s.action}>▶ Play here</Text>
+        </Pressable>):<Surface><Text style={s.body}>The latest videos will appear after the YouTube Data API is connected. Meanwhile, the curated church playlists above are playable.</Text>
+          <PrimaryButton outline label="Browse all videos  ↗" onPress={()=>{void Linking.openURL(YOUTUBE_CHANNEL+'/videos');}}/></Surface>}
+      </>}
+      {mediaView==='clips'&&<>
+        <SectionHeading title="Short messages"/>
+        {(media?.clips||[]).length?media!.clips.map(v=><Pressable key={v.id} accessibilityRole="button"
+          accessibilityLabel={'Play short clip '+v.title} onPress={()=>chooseVideo(v.id)} style={s.surface}>
+          {v.thumbnail&&<Image source={{uri:v.thumbnail}} style={{width:'100%',height:140,borderRadius:12}} resizeMode="cover"/>}
+          <Text style={s.cardTitle}>{v.title}</Text><Text style={s.action}>▶ Play short clip</Text>
+        </Pressable>):<Surface><Text style={s.body}>Enjoy short highlights from the church's official #SHORT playlist.</Text>
+          <PrimaryButton outline label="Play short clips here" onPress={()=>choosePlaylist(OFFICIAL_PLAYLISTS[1].id)}/></Surface>}
+      </>}
+      {mediaView==='playlists'&&<>
+        <SectionHeading title="Official YouTube playlists"/>
+        {(media?.playlists?.length?media.playlists:OFFICIAL_PLAYLISTS).map(p=><Surface key={p.id}>
+          <Text style={s.cardTitle}>{p.title}</Text>
+          <PrimaryButton outline label="▶ Play playlist in app" onPress={()=>choosePlaylist(p.id)}/>
+        </Surface>)}
+      </>}
       <Surface><Tag>FROM SOLID ROCK DUBLIN</Tag><Text style={s.cardTitle}>Demonstrating the Gospel of Christ</Text><Text style={s.body}>Listen to the welcome audio published on the official church website.</Text><PrimaryButton label="Listen to welcome message  ↗" outline onPress={()=>{void Linking.openURL('https://solidrockdublin.org/wp-content/uploads/2025/02/Welcome.mp3');}}/></Surface>
       {remote?.sermons?.length ? <><SectionHeading title="Church sermons"/>{remote.sermons.map(m=><Surface key={m.id}><Tag>{m.series||'SERMON'}</Tag><Text style={s.cardTitle}>{m.title}</Text><Text style={s.body}>{m.description}</Text><Text style={s.meta}>{[m.speaker,m.passage].filter(Boolean).join(' · ')}</Text>{m.media_url?.startsWith('https://')?<PrimaryButton label="Open sermon  ↗" outline onPress={()=>{void Linking.openURL(m.media_url!);}}/>:null}</Surface>)}</> : null}
       <SectionHeading title="Study guides"/><TextInput accessibilityLabel="Search study guides" value={search} onChangeText={setSearch} placeholder="Search topics or Scripture" placeholderTextColor={T.muted} style={s.input}/>
@@ -219,7 +309,7 @@ function AppContent() {
   return <SafeAreaView style={s.safe} edges={['top', 'bottom']}><StatusBar barStyle={mode==='dark'?'light-content':'dark-content'} backgroundColor={T.white}/>
     <Header onAbout={() => goPage('About')} mode={mode} toggleMode={toggleMode}/>
     {loading ? <View style={s.loading}><ActivityIndicator color={T.brand}/></View> : <>
-      <ScrollView key={page ?? tab} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.scrollContent, { width: contentWidth, alignSelf: 'center' }]}>{page ? Detail() : tab === 'Home' ? Home() : tab === 'Watch' ? Watch() : tab === 'Events' ? Events() : tab === 'Give' ? Give() : More()}</ScrollView>
+      <ScrollView ref={scrollRef} key={page ?? tab} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.scrollContent, { width: contentWidth, alignSelf: 'center' }]}>{page ? Detail() : tab === 'Home' ? Home() : tab === 'Watch' ? Watch() : tab === 'Events' ? Events() : tab === 'Give' ? Give() : More()}</ScrollView>
       <View style={s.tabBar}>{tabs.map(t => <Pressable key={t.name} accessibilityRole="tab" accessibilityState={{ selected: tab === t.name && !page }} accessibilityLabel={t.name} onPress={() => goTab(t.name)} style={s.tab}>
         <Text style={[s.tabIcon, tab === t.name && !page && s.active]}>{t.icon}</Text><Text style={[s.tabText, tab === t.name && !page && s.active]}>{t.name}</Text></Pressable>)}</View>
     </>}
