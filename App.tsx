@@ -95,9 +95,10 @@ function AppContent() {
 
   function Home() {
     return <>
-      <ImageBackground source={{uri:churchAssets.worship}} style={{borderRadius:25,overflow:'hidden'}} imageStyle={{borderRadius:25}} resizeMode="cover"><View style={s.hero}><Tag>YOU BELONG HERE</Tag>
+      <ImageBackground accessibilityLabel="Solid Rock congregation gathering for worship" source={{uri:churchAssets.worship}} style={{borderRadius:25,overflow:'hidden'}} imageStyle={{borderRadius:25}} resizeMode="cover"><View style={s.hero}><Tag>YOU BELONG HERE</Tag>
         <Text style={[s.heroTitle,{color:'#FFFFFF'}]}>Welcome to{ '\n' }Solid Rock.</Text>
         <Text style={[s.heroCopy,{color:'#F2EBDD'}]}>{INTRO}</Text>
+        <Text style={{fontFamily:'Mulish_700Bold',fontSize:13,color:'#F5E3B3'}}>{SUNDAY_SERVICE} · Inchicore, Dublin 8</Text>
         <PrimaryButton label="Plan your visit  ↗" onPress={()=>{void Linking.openURL(VISIT_URL);}}/>
       </View></ImageBackground>
       <View style={s.quickRow}>
