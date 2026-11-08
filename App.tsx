@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, Linking, Pressable, ScrollView, StatusBar,
-  StyleSheet, Text, TextInput, View, useWindowDimensions,
+  StyleSheet, Text, TextInput, View, Image, ImageBackground, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CHURCH_NAME, CHURCH_URL, INTRO, sampleEvents, sampleMessages } from './src/content';
-import { theme as T } from './src/theme';
+import { CHURCH_NAME, CHURCH_URL, INTRO, sampleEvents, sampleMessages, SUNDAY_SERVICE, CONTACT_ADDRESS, VISIT_URL, MINISTRIES } from './src/content';
+import { theme as T, setActiveTheme, churchAssets, type ThemeMode } from './src/theme';
 import MemberHub from './src/MemberHub';
 import { cloudEnabled, getPublicContent } from './src/backend';
 
@@ -38,14 +38,20 @@ function PrimaryButton({ label, onPress, outline = false }: { label: string; onP
 function Surface({ children }: { children: React.ReactNode }) {
   return <View style={s.surface}>{children}</View>;
 }
-function Header({ onAbout }: { onAbout: () => void }) {
-  return <View style={s.topbar}><View style={s.mark}><Text style={s.markText}>SR</Text></View>
-    <View style={{ flex: 1 }}><Text style={s.brand}>{CHURCH_NAME}</Text><Text style={s.subBrand}>DUBLIN · WELCOME HOME</Text></View>
+function Header({ onAbout, mode, toggleMode }: { onAbout: () => void; mode:ThemeMode; toggleMode:()=>void }) {
+  return <View style={s.topbar}><Image source={{uri:mode==='dark'?churchAssets.logoDark:churchAssets.logoLight}} style={{height:49,width:55}} resizeMode="contain" accessibilityLabel="Solid Rock Dublin official logo"/>
+    <View style={{ flex: 1 }}><Text style={s.brand}>{CHURCH_NAME}</Text><Text style={s.subBrand}>LOVING GOD · SERVING THE WORLD</Text></View>
+    <Pressable accessibilityLabel={mode==='dark'?'Switch to light mode':'Switch to dark mode'} accessibilityRole="button" accessibilityHint="Changes the app colour theme" onPress={toggleMode} style={s.info}><Text style={{color:T.ink,fontSize:16}}>{mode==='dark'?'☼':'☾'}</Text></Pressable>
     <Pressable accessibilityLabel="About Solid Rock" accessibilityRole="button" onPress={onAbout} style={s.info}><Text style={{ color: T.brand, fontWeight: '800' }}>i</Text></Pressable>
   </View>;
 }
 function AppContent() {
   const { width } = useWindowDimensions();
+  const [mode,setMode]=useState<ThemeMode>('dark');
+  setActiveTheme(mode);
+  s=makeStyles();
+  useEffect(()=>{let mounted=true;AsyncStorage.getItem('@solidrock:theme').then(v=>{if(mounted&&(v==='light'||v==='dark'))setMode(v);}).catch(()=>{});return()=>{mounted=false;};},[]);
+  function toggleMode(){const next=mode==='dark'?'light':'dark';setMode(next);void AsyncStorage.setItem('@solidrock:theme',next).catch(()=>{});}
   const [tab, setTab] = useState<Tab>('Home');
   const [page, setPage] = useState<Page>(null);
   const [preferences, setPreferences] = useState<Preferences>(EMPTY);
@@ -83,11 +89,11 @@ function AppContent() {
 
   function Home() {
     return <>
-      <View style={s.hero}><Tag>YOU BELONG HERE</Tag>
-        <Text style={s.heroTitle}>Welcome to{ '\n' }Solid Rock.</Text>
-        <Text style={s.heroCopy}>{INTRO}</Text>
-        <PrimaryButton label="Plan your visit  ↗" onPress={openOfficialSite}/>
-      </View>
+      <ImageBackground source={{uri:churchAssets.worship}} style={{borderRadius:25,overflow:'hidden'}} imageStyle={{borderRadius:25}} resizeMode="cover"><View style={s.hero}><Tag>YOU BELONG HERE</Tag>
+        <Text style={[s.heroTitle,{color:'#FFFFFF'}]}>Welcome to{ '\n' }Solid Rock.</Text>
+        <Text style={[s.heroCopy,{color:'#F2EBDD'}]}>{INTRO}</Text>
+        <PrimaryButton label="Plan your visit  ↗" onPress={()=>{void Linking.openURL(VISIT_URL);}}/>
+      </View></ImageBackground>
       <View style={s.quickRow}>
         <Pressable style={s.quick} onPress={() => goTab('Watch')} accessibilityRole="button"><Text style={s.quickIcon}>▶</Text><Text style={s.quickTitle}>Watch</Text><Text style={s.quickMeta}>Worship & study</Text></Pressable>
         <Pressable style={s.quick} onPress={() => goTab('Events')} accessibilityRole="button"><Text style={s.quickIcon}>▦</Text><Text style={s.quickTitle}>Events</Text><Text style={s.quickMeta}>Gather together</Text></Pressable>
@@ -95,7 +101,10 @@ function AppContent() {
       </View>
       {remote?.announcements?.length ? <><SectionHeading title="Church announcements"/>{remote.announcements.slice(0,2).map(a=><Surface key={a.id}><Text style={s.cardTitle}>{a.title}</Text><Text style={s.body}>{a.body}</Text></Surface>)}</> : null}
       <SectionHeading title="This week" action="All events" onAction={() => goTab('Events')}/>
-      <Surface><Tag>WEEKLY WORSHIP</Tag><Text style={s.cardTitle}>Gather with us this Sunday</Text><Text style={s.body}>Come as you are. See the latest service time and location on the official church website.</Text><PrimaryButton label="Service details  ↗" outline onPress={openOfficialSite}/></Surface>
+      <Surface><Tag>WEEKLY WORSHIP</Tag><Text style={s.cardTitle}>{SUNDAY_SERVICE}</Text><Text style={s.body}>{CONTACT_ADDRESS}</Text><PrimaryButton label="Plan a visit  ↗" outline onPress={()=>{void Linking.openURL(VISIT_URL);}}/></Surface>
+      <SectionHeading title="Life at Solid Rock"/>
+      <Image source={{uri:churchAssets.community}} style={{width:'100%',height:180,borderRadius:18}} resizeMode="cover" accessibilityLabel="Solid Rock Dublin community photography"/>
+      {MINISTRIES.map(m=><Surface key={m.name}><Text style={s.cardTitle}>{m.name}</Text><Text style={s.body}>{m.detail}</Text><PrimaryButton label="Learn more  ↗" outline onPress={()=>{void Linking.openURL(m.url);}}/></Surface>)}
       <SectionHeading title="Grow in the Word" action="Explore" onAction={() => goTab('Watch')}/>
       <Surface><Text style={s.kicker}>REFLECTION</Text><Text style={s.cardTitle}>Rooted in faith</Text><Text style={s.body}>A short reading guide to help you reflect during the week.</Text><Pressable onPress={() => goPage('Bible')} accessibilityRole="button"><Text style={s.action}>Open Bible resources →</Text></Pressable></Surface>
     </>;
@@ -181,8 +190,8 @@ function AppContent() {
     </>;
   }
 
-  return <SafeAreaView style={s.safe} edges={['top', 'bottom']}><StatusBar barStyle="dark-content" backgroundColor={T.white}/>
-    <Header onAbout={() => goPage('About')}/>
+  return <SafeAreaView style={s.safe} edges={['top', 'bottom']}><StatusBar barStyle={mode==='dark'?'light-content':'dark-content'} backgroundColor={T.white}/>
+    <Header onAbout={() => goPage('About')} mode={mode} toggleMode={toggleMode}/>
     {loading ? <View style={s.loading}><ActivityIndicator color={T.brand}/></View> : <>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.scrollContent, { width: contentWidth, alignSelf: 'center' }]}>{page ? Detail() : tab === 'Home' ? Home() : tab === 'Watch' ? Watch() : tab === 'Events' ? Events() : tab === 'Give' ? Give() : More()}</ScrollView>
       <View style={s.tabBar}>{tabs.map(t => <Pressable key={t.name} accessibilityRole="tab" accessibilityState={{ selected: tab === t.name && !page }} accessibilityLabel={t.name} onPress={() => goTab(t.name)} style={s.tab}>
@@ -192,21 +201,22 @@ function AppContent() {
 }
 export default function App() { return <SafeAreaProvider><AppContent/></SafeAreaProvider>; }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: T.white },
+let s: ReturnType<typeof makeStyles>;
+function makeStyles(){return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: T.background },
   topbar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 13, gap: 11, borderBottomWidth: 1, borderBottomColor: T.border },
   mark: { backgroundColor: T.brand, width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  markText: { fontSize: 16, color: T.white, fontWeight: '900', letterSpacing: -1 },
+  markText: { fontSize: 16, color: T.background, fontWeight: '900', letterSpacing: -1 },
   brand: { color: T.ink, fontSize: 17, fontWeight: '800', letterSpacing: -0.5 },
   subBrand: { fontSize: 9, color: T.muted, fontWeight: '700', letterSpacing: 1.35, marginTop: 3 },
   info: { borderRadius: 20, borderWidth: 1, borderColor: T.border, width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { paddingTop: 20, paddingBottom: 32, gap: 14 },
-  hero: { borderRadius: 25, padding: 25, backgroundColor: T.pale, gap: 15 },
+  hero: { borderRadius: 25, padding: 25, backgroundColor: 'rgba(15,13,10,0.70)', gap: 15, minHeight:300, justifyContent:'center' },
   heroTitle: { color: T.ink, fontWeight: '900', fontSize: 35, lineHeight: 42, letterSpacing: -1.3 },
   heroCopy: { color: T.muted, fontSize: 15, lineHeight: 23 },
   button: { alignItems: 'center', justifyContent: 'center', backgroundColor: T.brand, borderRadius: 13, minHeight: 48, paddingHorizontal: 18, paddingVertical: 12, marginTop: 6 },
   buttonOutline: { backgroundColor: T.white, borderWidth: 1, borderColor: T.border },
-  buttonText: { color: T.white, fontWeight: '700', fontSize: 14 },
+  buttonText: { color: T.background, fontWeight: '700', fontSize: 14 },
   quickRow: { flexDirection: 'row', gap: 10 },
   quick: { flex: 1, paddingVertical: 18, paddingHorizontal: 11, backgroundColor: T.white, borderWidth: 1, borderColor: T.border, borderRadius: 17, minWidth: 0 },
   quickIcon: { fontSize: 22, color: T.blue, marginBottom: 8 },
@@ -246,4 +256,5 @@ const s = StyleSheet.create({
   tabText: { fontSize: 10, color: T.muted, fontWeight: '700' },
   active: { color: T.blue },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-});
+});}
+s=makeStyles();
