@@ -34,7 +34,7 @@ export default function JourneyScreen({onBible,onCommunity}:{onBible:()=>void;on
    </Pressable>)}</View>
   <View style={styles.progress}><Text style={styles.pathTitle}>{path.name}</Text><Text style={styles.intro}>{path.description}</Text>
    <Text style={styles.note}>{count} of 7 reflections marked complete · You set the pace</Text>
-   <View style={styles.bar}><View style={[styles.filled,{width:(count/7*100)+'%'}]}/></View>
+   <View style={styles.bar}><View style={[styles.filled,{width:`${count/7*100}%` as `${number}%`}]}/></View>
   </View>
   {path.tasks.map(([passage,prompt],i)=>{
     const k=path.id+':'+i,done=progress.done.includes(k);
