@@ -96,3 +96,40 @@ jobs:
         run: node --test tests/content-api.test.cjs
       - name: Check safe store identity configuration
         run: node -e "const app=require('./app.config.js')({config:{}});if(!app.android.package.endsWith('.preview'))process.exit(1);"
+
+  community-db-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: solid_rock_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d solid_rock_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: solid_rock_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Bootstrap isolated Supabase-style identity fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/db/bootstrap.sql
+      - name: Apply all schema migrations in order
+        run: |
+          set -euo pipefail
+          for file in supabase/migrations/*.sql; do
+            echo "Running $file"
+            psql -v ON_ERROR_STOP=1 -f "$file"
+          done
+      - name: Verify channel security, reporting, isolation and moderation
+        run: psql -v ON_ERROR_STOP=1 -f tests/db/community_rls.sql
