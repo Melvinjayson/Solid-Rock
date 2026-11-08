@@ -6,6 +6,8 @@ import {
   sendPrayerRequest, joinGroup, volunteer, givingHistory, pastoralAvailability,
   type Announcement, type ChurchEvent, type ChurchSermon, type ChurchGroup, type VolunteerOpportunity,
   type GivingRecord, type PastoralSlot,
+  myEventRegistrations, myPastoralBookings, cancelEventRegistration, cancelPastoralBooking,
+  type EventRegistration, type PastoralBooking,
 } from './backend';
 import { theme as T } from './theme';
 
@@ -45,6 +47,8 @@ export default function MemberHub() {
   const [prayer,setPrayer]=useState('');
   const [giving,setGiving]=useState<GivingRecord[]>([]);
   const [slots,setSlots]=useState<PastoralSlot[]>([]);
+  const [registrations,setRegistrations]=useState<EventRegistration[]>([]);
+  const [bookings,setBookings]=useState<PastoralBooking[]>([]);
   const [reading,setReading]=useState<PersonalReading>({});
   const [savedRegistrations,setSavedRegistrations]=useState<string[]>([]);
   const [savedGroups,setSavedGroups]=useState<string[]>([]);
@@ -119,8 +123,8 @@ export default function MemberHub() {
     if(!userId)return;
     setBusy(true);
     try{
-      const [records,available]=await Promise.all([givingHistory(),pastoralAvailability()]);
-      setGiving(records);setSlots(available);
+      const [records,available,reg,book]=await Promise.all([givingHistory(),pastoralAvailability(),myEventRegistrations(),myPastoralBookings()]);
+      setGiving(records);setSlots(available);setRegistrations(reg);setBookings(book);
     }catch(e){setError(safeMessage(e));}finally{setBusy(false);}
   }
   function mustSignIn(){Alert.alert('Member sign-in required','Open the Account section to sign in first.');setSection('Account');}
@@ -176,6 +180,7 @@ export default function MemberHub() {
         <Text style={styles.itemTitle}>{e.title}</Text><Info>{fmt(e.starts_at)}{e.venue?' · '+e.venue:''}</Info><Info>{e.description}</Info>
         {e.registration_enabled&&<CTA title={savedRegistrations.includes(e.id)?'Registration requested':'Register for event'} onPress={()=>void handleRegistration(e)} disabled={busy||savedRegistrations.includes(e.id)}/>}
       </View>) : <Info>No verified events are available from the church backend. For confirmed events, use the official website.</Info>}
+      {userId&&<><Text style={styles.cardTitle}>My event registrations</Text>{registrations.filter(x=>x.status==='registered').map(r=><View key={r.id} style={styles.item}><Text style={styles.itemTitle}>{data.events.find(e=>e.id===r.event_id)?.title||'Registered event'}</Text><CTA title="Cancel my registration" onPress={()=>void run(async()=>{await cancelEventRegistration(r.id);await loadPrivate();},'Registration cancelled.')} disabled={busy}/></View>)}</>}
       <CTA title="Official church calendar" onPress={()=>void officialLink()}/>
     </Card>}
     {section==='Community' && <>
@@ -196,6 +201,8 @@ export default function MemberHub() {
           <Info>{fmt(slot.starts_at)}</Info>
           <CTA title="Request appointment" onPress={()=>void run(()=>requestPastoralSlot(slot.id),'Your appointment booking was recorded.')} disabled={busy}/>
         </View>):<Info>No open pastoral slots are available from the backend.</Info>}
+        {bookings.filter(b=>!b.cancelled_at).length>0&&<Text style={styles.cardTitle}>My appointments</Text>}
+        {bookings.filter(b=>!b.cancelled_at).map(b=><View key={b.id} style={styles.item}><Info>Appointment reference: {b.id.slice(0,8)}</Info><CTA title="Cancel appointment" onPress={()=>void run(async()=>{await cancelPastoralBooking(b.id);await loadPrivate();},'Appointment cancelled.')} disabled={busy}/></View>)}
         <CTA title="Refresh availability" onPress={()=>void loadPrivate()} disabled={!cloudEnabled||!userId||busy}/>
       </Card>
     </>}
