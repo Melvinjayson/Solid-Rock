@@ -1,24 +1,26 @@
 {
   "expo": {
-    "name": "Solid Rock Centre",
+    "name": "Solid Rock Dublin Preview",
     "slug": "solid-rock-centre",
     "scheme": "solidrock",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.reveta.solidrock.preview"
     },
     "android": {
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.reveta.solidrock.preview"
     },
     "web": {
       "bundler": "metro",
-      "name": "Solid Rock Centre"
+      "name": "Solid Rock Dublin Preview"
     },
     "plugins": [],
     "extra": {
-      "environment": "prototype"
+      "environment": "uat-preview"
     }
   }
 }
