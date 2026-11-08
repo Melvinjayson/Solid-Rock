@@ -7,9 +7,10 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CHURCH_NAME, CHURCH_URL, INTRO, sampleEvents, sampleMessages } from './src/content';
 import { theme as T } from './src/theme';
+import MemberHub from './src/MemberHub';
 
 type Tab = 'Home' | 'Watch' | 'Events' | 'Give' | 'More';
-type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'My interests' | null;
+type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'My interests' | 'Church hub' | null;
 const tabs: { name: Tab; icon: string }[] = [
   { name: 'Home', icon: '⌂' }, { name: 'Watch', icon: '▶' },
   { name: 'Events', icon: '▦' }, { name: 'Give', icon: '♡' }, { name: 'More', icon: '☰' },
@@ -142,6 +143,7 @@ function AppContent() {
       { title: 'Bible & reading', desc: 'Open Scripture and reading guides', target: 'Bible' },
       { title: 'Prayer & care', desc: 'Private pastoral contact information', target: 'Prayer' },
       { title: 'Fellowships & ministries', desc: 'Connect and discover ways to serve', target: 'Groups' },
+      { title: 'Church hub', desc: 'Membership, events, groups, pastoral care and reading plans', target: 'Church hub' },
       { title: 'My saved items', desc: 'Local event interests and study bookmarks', target: 'My interests' },
       { title: 'About Solid Rock', desc: 'Find our church and plan a visit', target: 'About' },
       { title: 'Official website', desc: 'Latest information and announcements', external: true },
@@ -156,7 +158,7 @@ function AppContent() {
 
   function Detail() {
     return <><Pressable accessibilityRole="button" onPress={() => goPage(null)} style={{ marginBottom: 22 }}><Text style={s.action}>← Back</Text></Pressable>
-      <Text style={s.pageTitle}>{page}</Text>
+      {page === 'Church hub' ? <MemberHub/> : <Text style={s.pageTitle}>{page}</Text>}
       {page === 'Bible' && <><Text style={s.pageIntro}>Scripture is for everyone. No account required.</Text>
         <Surface><Tag>READING RESOURCE</Tag><Text style={s.cardTitle}>Ephesians 2:8–10</Text><Text style={s.body}>Reflect on grace, faith and a life shaped by good works. Open a Bible translation through the church's approved resources.</Text><PrimaryButton label="Explore Scripture resources  ↗" onPress={openOfficialSite}/></Surface>
         <Surface><Text style={s.cardTitle}>Suggested reflection</Text><Text style={s.body}>What does it mean to respond to grace with generosity, humility and service?</Text></Surface></>}
