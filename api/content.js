@@ -5,6 +5,16 @@
 const CHANNEL_ID = 'UCM6SGgWXyUDlCaZ8iYnIuKQ';
 const CHANNEL = 'https://www.youtube.com/@solidrockcentre';
 const INSTAGRAM = 'https://www.instagram.com/solidrockcentre/';
+const VERIFIED_SHORT_CLIPS = [
+  {id:'SEDV0Vola8g',title:'2024 — Year of Greater Glory',durationSeconds:34},
+  {id:'2qxZ1A3ChqE',title:'Finding your identity in God',durationSeconds:35},
+  {id:'3OfL0-ikmj0',title:'Prayer of Salvation',durationSeconds:37},
+];
+const curatedClips=()=>VERIFIED_SHORT_CLIPS.map(v=>({
+  ...v,description:'From the official Solid Rock Centre #SHORT playlist',
+  thumbnail:'https://i.ytimg.com/vi/'+v.id+'/hqdefault.jpg',
+  publishedAt:null,state:'recorded',url:'https://www.youtube.com/watch?v='+v.id
+}));
 const VERIFIED_DEVOTIONALS = [
   {id:'day-2-repentance-and-surrender',title:'Day 2 – Repentance and Surrender'},
   {id:'day-3-spiritual-renewal-and-empowerment',title:'Day 3 – Spiritual Renewal and Empowerment'},
@@ -47,7 +57,7 @@ function base() {
   return {
     version: 1, channelId: CHANNEL_ID, channelUrl: CHANNEL, instagramUrl: INSTAGRAM,
     fetchedAt: new Date().toISOString(), activeLive: null,
-    videos: [], clips: [], instagram: [], news: VERIFIED_DEVOTIONALS.map(d=>({...d,
+    videos: [], clips: curatedClips(), instagram: [], news: VERIFIED_DEVOTIONALS.map(d=>({...d,
       summary:'Verified 2026 Solid Rock Dublin devotional',url:'https://solidrockdublin.org/devotional/'+d.id,publishedAt:null
     })), playlists: PLAYLISTS,
     sources: { youtube: 'unconfigured', instagram: 'unconfigured', website: 'curated-fallback' },
@@ -112,7 +122,8 @@ async function youtubeFeed(result) {
         url: 'https://www.youtube.com/watch?v=' + v.id,
       }));
     result.videos = videos.filter(v => v.state === 'recorded').slice(0, 18);
-    result.clips = videos.filter(v => v.state === 'recorded' && v.durationSeconds !== null && v.durationSeconds <= 180).slice(0, 12);
+    const detectedClips = videos.filter(v => v.state === 'recorded' && v.durationSeconds !== null && v.durationSeconds <= 180).slice(0, 12);
+    if(detectedClips.length)result.clips=detectedClips;
     const active = videos.find(v => v.state === 'live');
     if (active) result.activeLive = active;
     // A live-stream search is more expensive; run only if uploads has no active broadcast.
