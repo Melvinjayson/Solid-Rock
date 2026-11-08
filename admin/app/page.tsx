@@ -116,6 +116,7 @@ export default function Admin() {
     <div className="grid"><nav className="nav" aria-label="Administration modules">
       {Object.entries(labels).map(([key,label])=><button key={key} onClick={()=>{setModule(key as Module);setForm(empty);setNotice('');setError('');}} className={module===key?'active':''}>{label}</button>)}
       {roles.some(r=>['pastor','super_admin'].includes(r))&&<Link href="/moderation" className="btn" style={{display:'block',textDecoration:'none',padding:'14px 12px',borderRadius:12,fontSize:13}}>Community moderation</Link>}
+      {roles.includes('super_admin')&&<Link href="/checkin" className="btn" style={{display:'block',textDecoration:'none',padding:'14px 12px',borderRadius:12,fontSize:13}}>Event check-in</Link>}
     </nav>
     <section className="panel"><h2>{labels[module]}</h2><p className="sub">{canWrite?'Your approved staff role permits updates in this module.':'Read-only for your current staff permissions.'}</p>
       {canWrite&&<div className="form">
