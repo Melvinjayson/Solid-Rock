@@ -28,6 +28,17 @@ npm run typecheck
 
 Read [social integrations and store release](docs/SOCIAL_MEDIA_AND_STORES.md) before attempting to configure credentials or publish. Never put API keys in `EXPO_PUBLIC_` variables.
 
+## Native-first community and onboarding update
+
+- Five primary tabs: **Home, Watch, Community, Events, More**. Giving lives in More; this keeps the main navigation focused on everyday worship and relationships.
+- `src/AppIcon.tsx` defines a single native icon family. The three-step `src/Onboarding.tsx` is skip-friendly, can be replayed, stores only a local preference and never forces sign-in.
+- `src/CommunityScreen.tsx` provides native channel discovery, join consent, messages, replies, prayer support, reports, blocking and empty states. Community membership is explicitly gated behind the church-owned authentication configuration.
+- `src/community.ts` and SQL migrations `006`–`008` provide member-only channels, transactional posting rules, reporting, moderation, mutual blocking and privacy-preserving prayer acknowledgement counts.
+- `admin/app/moderation/` supplies a role-gated report queue and channel pause controls for authorised pastoral moderators.
+- GitHub Actions includes **isolated PostgreSQL security integration tests** and browser UAT; these do not imply real church Supabase deployment.
+
+See [native design system](docs/NATIVE_DESIGN_SYSTEM.md) and [community UAT and governance](docs/COMMUNITY_UAT_AND_GOVERNANCE.md).
+
 ## Latest expanded implementation
 
 The repository now also includes:
@@ -43,7 +54,7 @@ The repository now also includes:
 
 ## What works in this implementation
 
-- Native iOS/Android five-tab navigation: **Home, Watch, Events, Give, More**.
+- Native iOS/Android five-tab navigation: **Home, Watch, Community, Events, More**.
 - Home cards and visitor-first navigation with no mandatory account.
 - Study-guide catalogue with searchable titles and local bookmarks.
 - Weekly activity cards with interest toggles stored locally through AsyncStorage.
