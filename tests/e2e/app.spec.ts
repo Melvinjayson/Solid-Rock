@@ -49,7 +49,7 @@ test('study-guide search and local bookmark persist without login', async ({page
 
 test('watch feature uses readable contrast on dark theme', async ({page}) => {
   await page.getByRole('tab',{name:'Watch',exact:true}).click();
-  const title=page.getByText(/Join our community/).first();
+  const title=page.getByText(/Worship, wherever you are|Watch Sunday service live/).first();
   await expect(title).toBeVisible();
   await expect(title).toHaveCSS('color','rgb(255, 255, 255)');
 });
@@ -65,4 +65,23 @@ test('local data deletion requires confirmation and resets preferences', async (
   await page.getByRole('tab',{name:'Watch',exact:true}).click();
   await expect(page.getByText('★ Saved to this device')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Switch to light mode'})).toBeVisible();
+});
+
+test('church YouTube player, playlist and Instagram fallback',async ({page})=>{
+  await page.getByRole('tab',{name:'Watch',exact:true}).click();
+  await expect(page.getByText('SOLID ROCK CENTRE TV')).toBeVisible();
+  await expect(page.getByTitle('Solid Rock Centre official YouTube player')).toBeVisible();
+  await page.getByRole('button',{name:'Playlists',exact:true}).click();
+  await expect(page.getByText('Official YouTube playlists')).toBeVisible();
+  await page.getByRole('button',{name:'▶ Play playlist in app'}).first().click();
+  await expect(page.getByTitle('Solid Rock Centre official YouTube player')).toBeVisible();
+  await page.getByRole('tab',{name:'Home',exact:true}).click();
+  await expect(page.getByText('From our community')).toBeVisible();
+  await expect(page.getByText('Follow Solid Rock Centre')).toBeVisible();
+});
+test('ministry photography and official accounts have accessible navigation',async ({page})=>{
+  await expect(page.getByText('Food Bank')).toBeVisible();
+  await expect(page.getByText('Youth Sunday School')).toBeVisible();
+  await expect(page.getByText('Spirituality')).toBeVisible();
+  await expect(page.getByText('From our community')).toBeVisible();
 });
