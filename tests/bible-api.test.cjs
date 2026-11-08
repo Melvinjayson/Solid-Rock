@@ -15,6 +15,7 @@ test('Scripture API is read-only, validates bounded book/chapter input',async()=
  ]){
    const res=response();await handler(req,res);
    assert.equal(res.statusCode,req.method==='POST'?405:400);
+   assert.equal(res.headers['Cache-Control'],'no-store');
  }
 });
 test('Scripture API returns exact public-domain text and caches valid results',async(t)=>{
@@ -39,5 +40,6 @@ test('Scripture API refuses a provider response with incompatible licensing',asy
  t.after(()=>{global.fetch=original;});
  const res=response();await handler({method:'GET',query:{book:'GEN',chapter:'1'}},res);
  assert.equal(res.statusCode,503);
+ assert.equal(res.headers['Cache-Control'],'no-store');
  assert.equal(res.body.error,'Scripture temporarily unavailable');
 });
