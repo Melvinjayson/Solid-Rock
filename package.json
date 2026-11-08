@@ -29,7 +29,9 @@
     "@expo-google-fonts/poppins": "0.4.1",
     "@expo-google-fonts/mulish": "0.4.2",
     "react-native-webview": "13.15.0",
-    "@expo/vector-icons": "15.0.3"
+    "@expo/vector-icons": "15.0.3",
+    "expo-clipboard": "~8.0.8",
+    "expo-notifications": "~0.32.17"
   },
   "devDependencies": {
     "typescript": "~5.9.2",
