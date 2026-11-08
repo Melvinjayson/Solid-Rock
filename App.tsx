@@ -42,7 +42,9 @@ function Surface({ children }: { children: React.ReactNode }) {
   return <View style={s.surface}>{children}</View>;
 }
 function Header({ onAbout, mode, toggleMode }: { onAbout: () => void; mode:ThemeMode; toggleMode:()=>void }) {
-  return <View style={s.topbar}><Image source={{uri:mode==='dark'?churchAssets.logoDark:churchAssets.logoLight}} style={{height:49,width:55}} resizeMode="contain" accessibilityLabel="Solid Rock Dublin official logo"/>
+  const [logoFailed,setLogoFailed]=useState(false);
+  useEffect(()=>setLogoFailed(false),[mode]);
+  return <View style={s.topbar}>{logoFailed ? <View style={s.mark}><Text style={s.markText}>SR</Text></View> : <Image source={{uri:mode==='dark'?churchAssets.logoDark:churchAssets.logoLight}} onError={()=>setLogoFailed(true)} style={{height:49,width:55}} resizeMode="contain" accessibilityLabel="Solid Rock Dublin official logo"/>}
     <View style={{ flex: 1 }}><Text style={s.brand}>{CHURCH_NAME}</Text><Text style={s.subBrand}>LOVING GOD · SERVING THE WORLD</Text></View>
     <Pressable accessibilityLabel={mode==='dark'?'Switch to light mode':'Switch to dark mode'} accessibilityRole="button" accessibilityHint="Changes the app colour theme" onPress={toggleMode} style={s.info}><Text style={{color:T.ink,fontSize:16}}>{mode==='dark'?'☼':'☾'}</Text></Pressable>
     <Pressable accessibilityLabel="About Solid Rock" accessibilityRole="button" onPress={onAbout} style={s.info}><Text style={{ color: T.brand, fontWeight: '800' }}>i</Text></Pressable>
@@ -213,8 +215,8 @@ let s: ReturnType<typeof makeStyles>;
 function makeStyles(){return StyleSheet.create({
   safe: { flex: 1, backgroundColor: T.background },
   topbar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 13, gap: 11, borderBottomWidth: 1, borderBottomColor: T.border },
-  mark: { backgroundColor: T.brand, width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  markText: { fontSize: 16, color: T.background, fontWeight: '900', letterSpacing: -1 },
+  mark: { backgroundColor: T.pale, width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  markText: { fontSize: 16, color: T.gold, fontWeight: '900', letterSpacing: -1 },
   brand: { fontFamily:'Poppins_700Bold', color: T.ink, fontSize: 17, fontWeight: '800', letterSpacing: -0.5 },
   subBrand: { fontFamily:'Mulish_400Regular', fontSize: 9, color: T.muted, fontWeight: '700', letterSpacing: 1.35, marginTop: 3 },
   info: { borderRadius: 20, borderWidth: 1, borderColor: T.border, width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
@@ -242,9 +244,9 @@ function makeStyles(){return StyleSheet.create({
   meta: { fontFamily:'Mulish_400Regular', color: T.ink, fontWeight: '600', fontSize: 12 },
   pageTitle: { fontFamily:'Poppins_700Bold', color: T.ink, fontSize: 30, fontWeight: '900', letterSpacing: -0.8 },
   pageIntro: { fontFamily:'Mulish_400Regular', color: T.muted, lineHeight: 22, fontSize: 15, marginBottom: 4 },
-  mediaHero: { backgroundColor: T.ink, borderRadius: 22, padding: 25, gap: 15 },
-  mediaTitle: { fontFamily:'Poppins_700Bold', color: T.white, fontSize: 27, fontWeight: '900', lineHeight: 34 },
-  mediaSub: { color: '#CCD7E9', fontSize: 14, lineHeight: 22 },
+  mediaHero: { backgroundColor: '#20160F', borderRadius: 22, padding: 25, gap: 15 },
+  mediaTitle: { fontFamily:'Poppins_700Bold', color: '#FFFFFF', fontSize: 27, fontWeight: '900', lineHeight: 34 },
+  mediaSub: { color: '#E9E0D1', fontSize: 14, lineHeight: 22 },
   livePill: { color: '#F1CB90', fontSize: 11, fontWeight: '800', letterSpacing: 1 },
   input: { borderRadius: 13, backgroundColor: T.background, color: T.ink, borderWidth: 1, borderColor: T.border, padding: 14, fontSize: 14 },
   disclaimer: { fontFamily:'Mulish_400Regular', fontSize: 12, color: T.muted, lineHeight: 19, marginTop: 7 },
