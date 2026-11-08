@@ -103,10 +103,11 @@ create table public.prayer_requests (
 create table public.pastoral_slots (
  id uuid primary key default gen_random_uuid(),
  pastor_id uuid not null references auth.users(id),
- starts_at timestamptz not null unique,
+ starts_at timestamptz not null,
  ends_at timestamptz not null,
  available boolean not null default true,
- constraint valid_slot check(ends_at > starts_at)
+ constraint valid_slot check(ends_at > starts_at),
+ constraint unique_pastor_slot unique(pastor_id,starts_at)
 );
 create table public.pastoral_bookings (
  id uuid primary key default gen_random_uuid(),
