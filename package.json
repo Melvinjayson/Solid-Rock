@@ -22,7 +22,10 @@
     "react-native-url-polyfill": "^2.0.0",
     "react-dom": "19.1.0",
     "react-native-web": "^0.21.0",
-    "@expo/metro-runtime": "~6.1.2"
+    "@expo/metro-runtime": "~6.1.2",
+    "expo-font": "~14.0.12",
+    "@expo-google-fonts/poppins": "0.4.1",
+    "@expo-google-fonts/mulish": "0.4.2"
   },
   "devDependencies": {
     "typescript": "~5.9.2",
