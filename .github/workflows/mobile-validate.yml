@@ -58,3 +58,26 @@ jobs:
             playwright-report/
           if-no-files-found: warn
           retention-days: 14
+
+  sql-syntax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PostgreSQL parser
+        run: python -m pip install 'pglast>=7,<9'
+      - name: Parse all database migrations
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from pglast import parse_sql
+          files=sorted(Path('supabase/migrations').glob('*.sql'))
+          assert files, 'No migrations found'
+          for f in files:
+              parse_sql(f.read_text())
+              print('Parsed:',f)
+          print(f'{len(files)} SQL migrations parsed successfully (syntax only; RLS execution still requires staging)')
+          PY
