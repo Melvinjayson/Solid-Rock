@@ -16,7 +16,7 @@ import { loadMediaFeed, YOUTUBE_CHANNEL, YOUTUBE_LIVE, INSTAGRAM_CHANNEL, OFFICI
 import { cloudEnabled, getPublicContent } from './src/backend';
 
 type Tab = 'Home' | 'Watch' | 'Events' | 'Give' | 'More';
-type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'Privacy' | 'My interests' | 'Church hub' | null;
+type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'Privacy' | 'My interests' | 'Church hub' | 'Social' | null;
 const tabs: { name: Tab; icon: string }[] = [
   { name: 'Home', icon: '⌂' }, { name: 'Watch', icon: '▶' },
   { name: 'Events', icon: '▦' }, { name: 'Give', icon: '♡' }, { name: 'More', icon: '☰' },
@@ -76,7 +76,7 @@ function AppContent() {
   const [mediaCached,setMediaCached]=useState(false);
   const [mediaBusy,setMediaBusy]=useState(false);
   const [selectedVideo,setSelectedVideo]=useState<string|null>(null);
-  const [selectedPlaylist,setSelectedPlaylist]=useState<string>(OFFICIAL_PLAYLISTS[0].id);
+  const [selectedPlaylist,setSelectedPlaylist]=useState<string|null>(null);
   const [mediaView,setMediaView]=useState<'live'|'videos'|'clips'|'playlists'>('live');
   async function refreshMedia(){setMediaBusy(true);try{const v=await loadMediaFeed();setMedia(v.feed);setMediaCached(v.fromCache);}finally{setMediaBusy(false);}}
   useEffect(()=>{void refreshMedia();},[]);
@@ -170,11 +170,13 @@ function AppContent() {
       <Surface>
         <Tag>{selectedVideo?'NOW PLAYING':media?.activeLive?'CHURCH LIVESTREAM':'CHURCH VIDEO'}</Tag>
         {selectedVideo?<YouTubePlayer key={selectedVideo} videoId={selectedVideo}/>:
+          selectedPlaylist?<YouTubePlayer key={selectedPlaylist} playlistId={selectedPlaylist}/>:
           media?.activeLive?<YouTubePlayer key={media.activeLive.id} videoId={media.activeLive.id}/>:
-          <YouTubePlayer key={selectedPlaylist||OFFICIAL_PLAYLISTS[0].id} playlistId={selectedPlaylist||OFFICIAL_PLAYLISTS[0].id}/>}
+          <YouTubePlayer key={OFFICIAL_PLAYLISTS[0].id} playlistId={OFFICIAL_PLAYLISTS[0].id}/>}
         <Text style={s.body}>{selectedVideo?'Playing an official YouTube video.':media?.activeLive?
           'Live stream detected from the church channel.':
           'No live broadcast is confirmed right now. Browse an official playlist or check the Live channel.'}</Text>
+        {media?.activeLive&&(selectedVideo||selectedPlaylist)&&<PrimaryButton outline label="Return to live service" onPress={()=>{setSelectedVideo(null);setSelectedPlaylist(null);}}/>}
         {!media?.activeLive&&<PrimaryButton outline label="Check for live service  ↗"
           onPress={()=>{void Linking.openURL(YOUTUBE_LIVE);}}/>}
         <PrimaryButton outline label={mediaBusy?'Checking feed…':'Refresh latest videos'} onPress={()=>{void refreshMedia();}}/>
@@ -258,13 +260,16 @@ function AppContent() {
       { title: 'Prayer & care', desc: 'Private pastoral contact information', target: 'Prayer' },
       { title: 'Fellowships & ministries', desc: 'Connect and discover ways to serve', target: 'Groups' },
       { title: 'Church hub', desc: 'Membership, events, groups, pastoral care and reading plans', target: 'Church hub' },
+      { title: 'Community feed', desc: 'Church videos, Instagram posts and website news', target: 'Social' },
       { title: 'My saved items', desc: 'Local event interests and study bookmarks', target: 'My interests' },
       { title: 'About Solid Rock', desc: 'Find our church and plan a visit', target: 'About' },
       { title: 'Privacy and your data', desc: 'How this preview handles information', target: 'Privacy' },
       { title: 'Official website', desc: 'Latest information and announcements', external: true },
+      { title: 'Official YouTube', desc: 'Church livestreams and recordings', external: true },
+      { title: 'Official Instagram', desc: 'Photos, reels and posts', external: true },
     ];
     return <><Text style={s.pageTitle}>More to explore</Text><Text style={s.pageIntro}>Faith, community and helpful resources.</Text>
-      {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.external ? void Linking.openURL(l.title==='Prayer & fasting devotionals'?'https://solidrockdublin.org/blog-standart/':CHURCH_URL) : goPage(l.target ?? null)}>
+      {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.external ? void Linking.openURL(l.title==='Prayer & fasting devotionals'?'https://solidrockdublin.org/blog-standart/':l.title==='Official YouTube'?YOUTUBE_CHANNEL:l.title==='Official Instagram'?INSTAGRAM_CHANNEL:CHURCH_URL) : goPage(l.target ?? null)}>
         <View style={{ flex: 1 }}><Text style={s.menuTitle}>{l.title}</Text><Text style={s.menuDesc}>{l.desc}</Text></View><Text style={s.chevron}>›</Text>
       </Pressable>)}
       <Text style={s.disclaimer}>Member accounts, financial statements and pastoral bookings require approved integrations and are not enabled in this MVP.</Text>
@@ -274,6 +279,29 @@ function AppContent() {
   function Detail() {
     return <><Pressable accessibilityRole="button" onPress={() => goPage(null)} style={{ marginBottom: 22 }}><Text style={s.action}>← Back</Text></Pressable>
       {page === 'Church hub' ? <MemberHub/> : <Text style={s.pageTitle}>{page}</Text>}
+      {page === 'Social' && <>
+        <Text style={s.pageIntro}>Latest public updates from the church and its official channels. Posts load from approved sources when available.</Text>
+        <Surface><Text style={s.cardTitle}>Solid Rock Centre on YouTube</Text>
+          <Text style={s.body}>Livestreams, Sunday messages, playlists and short clips from @solidrockcentre.</Text>
+          <PrimaryButton label="Watch videos in this app" onPress={()=>goTab('Watch')}/>
+          <PrimaryButton outline label="Open YouTube channel  ↗" onPress={()=>{void Linking.openURL(YOUTUBE_CHANNEL);}}/></Surface>
+        <SectionHeading title="Instagram posts"/>
+        {media?.instagram?.length?media.instagram.map(post=><Surface key={post.id}>
+          {post.thumbnail&&<Image accessibilityLabel="Official Instagram post" source={{uri:post.thumbnail}} style={{width:'100%',height:240,borderRadius:12}} resizeMode="cover"/>}
+          <Tag>{post.type==='REELS'?'REEL':'INSTAGRAM'}</Tag>
+          <Text style={s.body}>{post.caption||'Latest official Solid Rock Centre update'}</Text>
+          <PrimaryButton outline label="View original Instagram post  ↗" onPress={()=>{void Linking.openURL(post.permalink);}}/>
+        </Surface>):<Surface><Text style={s.cardTitle}>Follow @solidrockcentre</Text>
+          <Text style={s.body}>The church's Instagram account needs to be authorised through Meta before posts can update automatically here. No unofficial scraping or invented posts are displayed.</Text>
+          <PrimaryButton outline label="Visit official Instagram  ↗" onPress={()=>{void Linking.openURL(INSTAGRAM_CHANNEL);}}/></Surface>}
+        <SectionHeading title="Church website updates"/>
+        {media?.news?.length?media.news.map(n=><Surface key={n.id}>
+          <Text style={s.cardTitle}>{n.title}</Text><Text style={s.body}>{n.summary}</Text>
+          <PrimaryButton outline label="Read on church website  ↗" onPress={()=>{void Linking.openURL(n.url);}}/>
+        </Surface>):<Surface><Text style={s.body}>Visit the official church website for up-to-date ministry information. A church-approved website news feed can publish updates into this section.</Text>
+          <PrimaryButton outline label="Visit church website  ↗" onPress={openOfficialSite}/></Surface>}
+        <PrimaryButton label={mediaBusy?'Refreshing…':'Refresh community feed'} onPress={()=>{void refreshMedia();}}/>
+      </>}
       {page === 'Bible' && <><Text style={s.pageIntro}>Scripture is for everyone. No account required.</Text>
         <Surface><Tag>READING RESOURCE</Tag><Text style={s.cardTitle}>Ephesians 2:8–10</Text><Text style={s.body}>Reflect on grace, faith and a life shaped by good works. Open a Bible translation through the church's approved resources.</Text><PrimaryButton label="Explore Scripture resources  ↗" onPress={openOfficialSite}/></Surface>
         <Surface><Text style={s.cardTitle}>Suggested reflection</Text><Text style={s.body}>What does it mean to respond to grace with generosity, humility and service?</Text></Surface></>}
