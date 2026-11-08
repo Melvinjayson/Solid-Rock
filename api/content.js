@@ -5,6 +5,12 @@
 const CHANNEL_ID = 'UCM6SGgWXyUDlCaZ8iYnIuKQ';
 const CHANNEL = 'https://www.youtube.com/@solidrockcentre';
 const INSTAGRAM = 'https://www.instagram.com/solidrockcentre/';
+const VERIFIED_DEVOTIONALS = [
+  {id:'day-2-repentance-and-surrender',title:'Day 2 – Repentance and Surrender'},
+  {id:'day-3-spiritual-renewal-and-empowerment',title:'Day 3 – Spiritual Renewal and Empowerment'},
+  {id:'day-4-walking-in-the-spirit-and-overcoming-the-power-of-the-flesh',title:'Day 4 – Walking in the Spirit'},
+  {id:'day-5-countering-negative-repeated-patterns',title:'Day 5 – Countering Negative Repeated Patterns'},
+];
 const PLAYLISTS = [
   { id: 'PLY36ho3KNKuhilzkq9THo_5xTBoAFsvPL', title: 'The Year of Greater Glory' },
   { id: 'PLY36ho3KNKuhwVO3TPdXS1CTcvDAWUPMp', title: 'Short clips' },
@@ -41,8 +47,10 @@ function base() {
   return {
     version: 1, channelId: CHANNEL_ID, channelUrl: CHANNEL, instagramUrl: INSTAGRAM,
     fetchedAt: new Date().toISOString(), activeLive: null,
-    videos: [], clips: [], instagram: [], news: [], playlists: PLAYLISTS,
-    sources: { youtube: 'unconfigured', instagram: 'unconfigured', website: 'unconfigured' },
+    videos: [], clips: [], instagram: [], news: VERIFIED_DEVOTIONALS.map(d=>({...d,
+      summary:'Verified 2026 Solid Rock Dublin devotional',url:'https://solidrockdublin.org/devotional/'+d.id,publishedAt:null
+    })), playlists: PLAYLISTS,
+    sources: { youtube: 'unconfigured', instagram: 'unconfigured', website: 'curated-fallback' },
   };
 }
 // Public channel RSS provides an API-key-free recent-video feed. It does not
@@ -176,11 +184,9 @@ async function homepageDevotionals(result) {
         summary:'21 Days of Prayer and Fasting · Solid Rock Dublin',
         url:link[1],publishedAt:null});
     }
-    result.news=posts.slice(0,8);
-    result.sources.website=posts.length?'homepage':'unavailable';
+    if(posts.length){result.news=posts.slice(0,8);result.sources.website='homepage';}
   }catch(err){
-    result.sources.website='unavailable';
-    console.warn('Church website content unavailable:',err instanceof Error?err.message:'unknown');
+    console.warn('Church website content unavailable, using verified fallback:',err instanceof Error?err.message:'unknown');
   }
 }
 async function websiteFeed(result) {
@@ -212,7 +218,6 @@ async function websiteFeed(result) {
     }).filter(x => x.title);
     result.sources.website = 'ready';
   } catch (err) {
-    result.sources.website = 'unavailable';
     console.warn('Church website RSS unavailable, trying homepage:', err instanceof Error ? err.message : 'unknown');
     await homepageDevotionals(result);
   }
