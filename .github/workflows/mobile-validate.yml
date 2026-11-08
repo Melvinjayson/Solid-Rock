@@ -94,6 +94,8 @@ jobs:
         run: node --check api/content.js
       - name: Test read-only content aggregation and security boundaries
         run: node --test tests/content-api.test.cjs
+      - name: Test member OTP input validation
+        run: node --test tests/auth-validation.test.cjs
       - name: Check safe store identity configuration
         run: node -e "const app=require('./app.config.js')({config:{}});if(!app.android.package.endsWith('.preview'))process.exit(1);"
 
