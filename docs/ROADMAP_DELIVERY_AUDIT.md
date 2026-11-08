@@ -32,13 +32,13 @@ This file reconciles the older planning baseline and feature-status matrix with 
 
 | Area | Phase | Source or capability | Current evidence | Remaining release gate |
 | --- | --- | --- | --- | --- |
-| Guest navigation and theme | P0 | `App.tsx`, `src/theme.ts`, `src/AppIcon.tsx` | Implemented; web browser tests | Native device + contrast/dynamic text review |
+| Guest navigation and theme | P0 | `App.tsx`, `src/theme.ts`, `src/AppIcon.tsx`, `src/localData.ts` | Implemented; scoped local erase, app sign-out and web regression tests | Native device + contrast/dynamic text review; cloud deletion separate |
 | Onboarding | P0 | `src/Onboarding.tsx`, locally persisted skip and interest | Implemented; browser UAT | Screen reader/low literacy and cultural UAT |
 | Church identity/content | P0 | `src/content.ts`, `src/churchFacts.ts` | Official site values verified 8 Nov 2026 | Church logo/photo licences and approval |
 | Livestream and sermons | P0 | `src/YouTubePlayer.*`, `api/content.js` | Official videos via RSS, short clips, embedded player | Native WebView playback and YouTube live-status API key |
 | Multiple social accounts | P1 | `src/SocialConnectScreen.tsx` | Official YouTube/Instagram; verified Linktree fallback for Facebook/TikTok/X; podcasts | Confirm exact account links, platform API permissions; Meta token for Instagram posts |
 | Church website sync | P1 | Public read-only aggregator and verified devotional fallback | Live source and fallback exist | Approved structured CMS/news feed for complete events/content |
-| Bible reader | P0/P1 | `src/BibleReader.tsx` | 66-book WEB API, chapter cache, local notes/highlights, sharing reference | API resilience, native reading accessibility, translation choice licensing |
+| Bible reader | P0/P1 | `src/BibleReader.tsx`, `api/bible.js` | 66-book public-domain WEB, validated/cached public endpoint, external fallback, offline recent chapters, notes/highlights and sharing reference | Church-owned authoritative corpus/SLA, native reading accessibility, translation choice review |
 | Shared Bible study | P1/P2 | `src/CommunityScreen.tsx`, `src/community.ts` | Reference handoff; member-only Scripture group and thread RPCs | Church Supabase staging and moderator policies |
 | Faith journeys | P1 | `src/JourneyScreen.tsx` | Four opt-in seven-day journeys; private local progress | Church content review, youth/intercultural participant UAT |
 | Community channels | P2 | SQL `006`–`008`, community UI, moderator dashboard | Isolated DB security and browser tests | Operational moderation, safeguarding, private data retention and real Supabase UAT |
@@ -47,7 +47,7 @@ This file reconciles the older planning baseline and feature-status matrix with 
 | Hosted online giving | P1 | PayPal redirect through user's browser | Link implemented; no card collection or payment confirmation | Approved merchant provider, receipt/reconciliation and payment webhook |
 | Native card checkout | P1/P2 | **Not implemented** | No card collection or provider keys (correct security state) | Church contract, processor choice, approved hosted or SDK checkout, VAT/PSD2/PCI review |
 | Giving receipts / statements | P1/P2 | Read-only `giving_ledger` schema in backend | Gated, no client-created transactions | Authoritative processor verification and reconciliation, legal/finance approval |
-| Personal profile / identity | P0 | `src/MemberHub.tsx`, Supabase OTP service | Source implemented | Approved church domain, staging auth, support + deletion |
+| Personal profile / identity | P0 | `src/MemberHub.tsx`, Supabase OTP service, `src/authValidation.js` | OTP format defect corrected and unit-tested; new signup defaults disabled | Real church staging OTP/device tests, approved account creation and working remote deletion |
 | Member event registration | P0 | Atomic registration, opt-in waitlist and member status UI | Isolated SQL migration+RLS tests; waitlist promotion and staff check-in fixture | Real event and cross-role staging UAT |
 | Ministry/fellowship joining | P1 | Member Hub + scoped SQL RLS | Source implemented | Church-run volunteer and groups operations |
 | Pastoral booking/prayer intake | P1 | Private schema, safe mobile service | Gated | Care roster, confidential response procedures, pastoral consent |
@@ -105,6 +105,8 @@ Native binaries, social-platform access tokens, the current ChMeetings publisher
 - PR #2 remains **draft**; preview runs in a separate Vercel project, no changes to the real church website or existing store listings.
 
 ## Handover artifacts
+
+- `docs/PILOT_RELEASE_ACCEPTANCE.md`: church-owned guest pilot, member pilot, store release conditions and explicit signoff record.
 
 - `docs/NATIVE_DESIGN_SYSTEM.md`: visual and accessibility foundation.
 - `docs/SOCIAL_MEDIA_AND_STORES.md`: public sources, credentials and store release gates.
