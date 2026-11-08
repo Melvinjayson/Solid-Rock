@@ -1,4 +1,67 @@
-# Solid Rock Centre — Digital Church Platform
+# Solid Rock Centre — Mobile App MVP
+
+> **Implementation status:** Runnable Expo/React Native source implementation on feature branch. This is an interactive prototype and not a released app. No church membership, payment, sermon-hosting or appointment backend has been connected.
+
+## Run locally
+
+Requires Node.js and npm. Install dependencies with an internet connection.
+
+```bash
+npm install
+npx expo start
+```
+
+Open the Expo development server using Android Emulator, iOS Simulator (macOS), or a compatible Expo Go client. The package currently targets Expo SDK 54. To check TypeScript after installation:
+
+```bash
+npm run typecheck
+```
+
+## What works in this implementation
+
+- Native iOS/Android five-tab navigation: **Home, Watch, Events, Give, More**.
+- Home cards and visitor-first navigation with no mandatory account.
+- Study-guide catalogue with searchable titles and local bookmarks.
+- Weekly activity cards with interest toggles stored locally through AsyncStorage.
+- My saved items: remove bookmarked study guides and saved event interests.
+- Bible resources and ministry links to the official church website.
+- A privacy-conscious draft prayer field that is not transmitted or saved.
+- Giving guidance that points to the official church site, without fictional accounts or transactions.
+- Responsive mobile layout, screen labels, safe-area support, loading and storage error states.
+
+### Not implemented / not connected
+
+- Actual church event calendar, registration and attendance records
+- Member authentication, ChMeetings data sync and household accounts
+- Livestream/sermon feeds and digital Bible text distribution
+- Payment processing, statements and financial reconciliation
+- Pastoral appointments, live prayer submissions and push notification delivery
+- Admin console, backend APIs and app-store builds
+
+**Never treat sample study guides or weekly gathering cards as official church schedules or sermon recordings.** Validate service details before publication.
+
+## Repo structure
+
+```text
+App.tsx              Interactive mobile screens and state
+src/content.ts       Clearly labelled starter content and official church URL
+src/theme.ts         Reusable visual tokens
+app.json             Expo mobile configuration
+package.json         Expo and React Native dependencies
+docs/                Architecture, scope and delivery roadmap
+```
+
+## Reveta OS design relationship
+
+The palette uses the Reveta OS brand reference colours (RV-DEC-2026-042) as *design inspiration*. Solid Rock retains an independent identity; no Reveta logo, private design files, employer assets or restricted templates have been copied. A church-approved logo and complete brand asset pack can be integrated once approved and available.
+
+## Validation still required
+
+Because no dependency installation or simulator build was executed in this authoring environment, this branch needs CI/typecheck and device smoke testing before it can be considered verified. See [mobile QA checklist](docs/MOBILE_QA.md).
+
+---
+
+## Original product brief
 
 > **Project status: Planning and architecture definition.** This repository currently contains implementation documentation, not a released mobile application or a verified working backend.
 
