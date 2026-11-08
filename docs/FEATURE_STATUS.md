@@ -1,53 +1,28 @@
-# Solid Rock feature coverage — 8 November 2026
+# Solid Rock — Feature Status
 
-**Source implemented** means UI, client service, SQL schema or admin code exists. It does not imply production deployment or independently verified end-to-end operation.
+**Latest snapshot:** 8 November 2026  
+**Canonical evidence-based implementation status:** [ROADMAP_DELIVERY_AUDIT.md](ROADMAP_DELIVERY_AUDIT.md)  
+**Original planning baseline:** [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md)
 
-| Feature | Phase | Current status | Remaining dependency |
-| --- | --- | --- | --- |
-| Five-tab public app | P0 | Implemented, mobile typecheck pending | Device/accessibility QA |
-| Church announcements | P0 | Admin create + mobile read | Staging database, approved content |
-| Sermons and study guides | P0 | Catalogue, links, bookmarks, search | Approved sermon URLs, player QA |
-| Livestream player | P0 | Official-site link only | Native media player and livestream source |
-| Bible access | P0 | Reading resources and guide | Approved digital Bible corpus/licence |
-| Member account, profile | P0 | Supabase email OTP and profile UI | Auth configuration and migration |
-| Church events | P0 | Admin create, public listing | Staging content |
-| Member event registration | P0 | Atomic database RPC and mobile action | Integration and concurrency tests |
-| Prayer requests | P0 | Private RLS table and submission UI | Care-team response workflow |
-| Giving instructions | P0 | Verified-site link only | Church finance verification |
-| Staff publishing | P0 | Role-gated Next.js admin create/read | Staging and content QA |
-| Fellowships | P1 | Admin listing + mobile join | Groups approval and moderation |
-| Volunteering | P1 | Admin listings + mobile interest | Volunteer onboarding |
-| Reading plans | P1 | Local persistence, optional cloud sync | Approved Scripture content |
-| Pastoral booking | P1 | Atomic database RPC and mobile form | Staging slots and safeguarding |
-| Giving history | P1 | Read-only verified ledger UI | Provider reconciliation pipeline |
-| Households | P1 | Not implemented | Member linking and child safeguards |
-| Event tickets and QR check-in | P1 | Not implemented | Staff attendance controls |
-| Paid events, online payments | P1 | Not implemented | Approved processor and signed webhooks |
-| Statements and recurring giving | P1/P2 | Not implemented | Finance controls, ledger review |
-| Push alerts | P1 | Not implemented | Opt-in controls, APNs/FCM sender |
-| Captions and transcripts | P1 | Schema fields only | Media processing and rights |
-| Offline video downloads | P2 | Not implemented | Distribution rights and storage |
-| Groups chat and watch parties | P2 | Not implemented | Moderation, privacy and real-time service |
-| AI sermon/Scripture discovery | P2 | Deferred | Content provenance and safety evaluation |
-| Waitlists, advanced analytics | P2 | Not implemented | Capacity engine and privacy review |
+Do not reuse the older static P0/P1/P2 feature rows without checking the latest source and CI. This file is a small stable signpost; the linked audit is the one source of truth for each module's phase, implementation, verification and blocker.
 
-## Critical safety boundaries
-- No bank account numbers or financial transactions are embedded in the mobile application.
-- Only a trusted verified server may write to the giving ledger.
-- Pastoral care data is private and assigned to permitted roles.
-- No automatic Liberty-TV AI ingestion of private church records.
-- Sample content from the prototype is not production church data.
-- No Supabase migrations have been applied; no staging or production database is connected.
-- Staff identities must be verified and role-assigned through a trusted operational process.
+## Current build composition
 
-## Delivery gates
-1. Verify ownership of app listings, church content, consent, safeguarding and ChMeetings export.
-2. Set up dedicated Solid Rock Supabase staging; inspect and apply reviewed migrations.
-3. Configure six-digit email OTP, approved staff roles and public church content.
-4. Exercise RLS with guest/member/pastor/finance/admin test accounts.
-5. Exercise event/booking concurrency, failure paths and recovery.
-6. Complete Android and iOS build, device, accessibility and app-store tests.
-7. Integrate regulated giving only after processor and finance approval.
-8. Keep production untouched until release sign-off.
+- Public Expo guest app: Home · Watch · Community · Events · More; first-run onboarding; dark/light mode; local preferences and journeys.
+- Watch: official YouTube videos, Shorts and playlists, livestream playback only when an active stream is confirmed by a trusted provider.
+- Bible: World English Bible reader and chapter navigation, highlights, private notes, limited offline chapter cache and community-reference handoff.
+- Giving: published church IBAN with copy function and church PayPal-hosted redirect (no raw card data, no in-app payment capture/receipt).
+- Talk To Us: categorized email drafts, church contacts and directions; user chooses whether to send.
+- Profile and church membership: source exists behind explicit Supabase enablement and release gate.
+- Community: channel UI, consent, moderated posting, replies, prayer support, reports, blocks and staff moderation source; stays disabled for general users.
+- Updates: feed-derived in-app inbox, read/unread, local notification preferences, opt-in Sunday native reminder code.
+- Social: verified direct YouTube/Instagram, trusted church directory for Facebook/TikTok/X, podcast link and credential-gated Meta posts.
+- Staff operations: source and migration-backed role protections; staging and native acceptance still required.
 
-See `docs/IMPLEMENTATION_ROADMAP.md` for the broader P0–P2 product roadmap.
+## Risk-based blockers
+
+Bank recipient re-verification, actual card processor approval, Stripe/PayPal merchant credentials, ChMeetings transfer/store ownership and signing, the live staging database, real native-device and accessibility UAT, privacy/safeguarding procedures, staff moderation ownership, targeted push and household/child protocols are **not completed** by the source implementation.
+
+No production bank transfers, payment confirmations, member-data migrations, card transactions, app-store submissions or direct church social posts have been executed.
+
+**All six CI jobs must pass on the latest PR SHA before acceptance.** Browser builds prove neither production native playback nor security on an actual church Supabase deployment.
