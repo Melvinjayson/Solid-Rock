@@ -133,3 +133,5 @@ jobs:
           done
       - name: Verify channel security, reporting, isolation and moderation
         run: psql -v ON_ERROR_STOP=1 -f tests/db/community_rls.sql
+      - name: Verify waitlists and staff-only idempotent attendance
+        run: psql -v ON_ERROR_STOP=1 -f tests/db/events_waitlist.sql
