@@ -46,8 +46,6 @@ test('study-guide search and local bookmark persist without login', async ({page
   await expect(page.getByText('Grace for everyday life')).toBeVisible();
   await expect(page.getByText('Rooted in faith')).toHaveCount(0);
   await page.getByRole('button',{name:'☆ Save reading guide'}).click();
-  await expect(page.getByText('A community beyond Sunday.')).toBeVisible();
-  await page.getByRole('button',{name:'Skip welcome guide'}).click();
   await page.reload();
   await page.getByRole('tab',{name:'Watch',exact:true}).click();
   await expect(page.getByText(/Saved to this device/)).toBeVisible();
@@ -67,7 +65,10 @@ test('local data deletion requires confirmation and resets preferences', async (
   await page.getByRole('button',{name:'Clear all app data on this device'}).click();
   await expect(page.getByRole('button',{name:'Keep my data'})).toBeVisible();
   await page.getByRole('button',{name:"Yes, erase this device's app data"}).click();
+  await expect(page.getByText('A community beyond Sunday.')).toBeVisible();
   await page.reload();
+  await expect(page.getByText('A community beyond Sunday.')).toBeVisible();
+  await page.getByRole('button',{name:'Skip welcome guide'}).click();
   await page.getByRole('tab',{name:'Watch',exact:true}).click();
   await expect(page.getByText('★ Saved to this device')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Switch to light mode'})).toBeVisible();
