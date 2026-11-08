@@ -48,15 +48,15 @@ This file reconciles the older planning baseline and feature-status matrix with 
 | Native card checkout | P1/P2 | **Not implemented** | No card collection or provider keys (correct security state) | Church contract, processor choice, approved hosted or SDK checkout, VAT/PSD2/PCI review |
 | Giving receipts / statements | P1/P2 | Read-only `giving_ledger` schema in backend | Gated, no client-created transactions | Authoritative processor verification and reconciliation, legal/finance approval |
 | Personal profile / identity | P0 | `src/MemberHub.tsx`, Supabase OTP service | Source implemented | Approved church domain, staging auth, support + deletion |
-| Member event registration | P0 | SQL transactional registration functions, member UI | Isolated DB migration checks | Real event and cross-role staging UAT |
+| Member event registration | P0 | Atomic registration, opt-in waitlist and member status UI | Isolated SQL migration+RLS tests; waitlist promotion and staff check-in fixture | Real event and cross-role staging UAT |
 | Ministry/fellowship joining | P1 | Member Hub + scoped SQL RLS | Source implemented | Church-run volunteer and groups operations |
 | Pastoral booking/prayer intake | P1 | Private schema, safe mobile service | Gated | Care roster, confidential response procedures, pastoral consent |
 | In-app update inbox | P1 | `src/NotificationsScreen.tsx` | New read/unread filtering, verified public content | Operational notice approval and device QA |
 | Native scheduled Sunday reminder | P1 | `src/Reminder.native.ts` | Opt-in source; web is transparently unsupported | EAS signed device testing, permissions + timezone scheduling |
 | Targeted push / subscriptions | P1/P2 | **Not implemented** | Preferences local-only, no sender | APNs/FCM, sender, opt-in ledger, content permissions and moderation |
 | Households / parent-managed children | P1 | **Not implemented** | No child's data collected or displayed | Guardianship policy, identity verification, safeguarding and minors' data consent |
-| QR event check-in | P1 | **Not implemented** | No attendance or scanning claims | Staff-only device permissions and GDPR retention |
-| Event waitlist / paid tickets | P2 | **Not implemented** | Base registration_status enum supports future waitlist | Atomic capacity promotion and finance integration tests |
+| QR event check-in | P1 | **Staff-only idempotent check-in backend implemented; QR scanner not implemented** | Migration 009 records manual check-in reference with staff assignment controls | Real device scanning UI, event role and GDPR retention UAT |
+| Event waitlist / paid tickets | P2 | **Waitlist implemented in migration 009, paid tickets not implemented** | Transactional waitlist promotion and member confirmation statuses | Real Supabase / paid entitlement integration & church approval |
 | Volunteer rosters / staff scheduling | P1/P2 | **Not implemented** | Volunteer interest records only | Ministry owner and availability scheduling workflow |
 | Event forms / surveys | P1/P2 | **Not implemented** | Talk To Us provides user-controlled email draft, not DB intake | Data-minimisation, staff workflow, retention and anti-spam |
 | Bible translation/audio/multilingual UI | P1/P2 | English WEB only; other languages **not implemented** | No false translated content | Translation/content licensing, accessibility and intercultural usability test |
@@ -99,7 +99,7 @@ Native binaries, social-platform access tokens, the current ChMeetings publisher
 
 ## Verification standard
 
-- The repository GitHub Actions workflow runs 6 checks: mobile TS, admin TS, Vercel public-content API contract, SQL syntax, isolated PostgreSQL migration+RLS integration, mobile/desktop Playwright browser UAT with captures.
+- The repository GitHub Actions workflow runs 6 checks: mobile TS, admin TS, Vercel public-content API contract, SQL syntax, isolated PostgreSQL migrations+RLS+waitlist/check-in integration, mobile/desktop Playwright browser UAT with captures.
 - Always verify these six jobs against the **latest head SHA**; previously passing runs are superseded after a push.
 - Browser tests verify UI and boundary contract, **not** real Android/iOS playback, payment, Supabase Auth/Realtime or church ops sign-off.
 - PR #2 remains **draft**; preview runs in a separate Vercel project, no changes to the real church website or existing store listings.
