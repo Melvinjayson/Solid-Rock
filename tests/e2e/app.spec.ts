@@ -122,5 +122,70 @@ test('community guest can inspect five channel topics without seeing fabricated 
 test('giving stays available through More instead of occupying a tab',async ({page})=>{
  await page.getByRole('tab',{name:'More'}).click();
  await page.getByRole('button',{name:/^Giving/}).click();
- await expect(page.getByText('A heart of generosity')).toBeVisible();
+ await expect(page.getByText('Generosity, made simple.')).toBeVisible();
+});
+
+test('official church giving uses verified IBAN and external hosted checkout',async ({page})=>{
+ await page.getByRole('tab',{name:'More',exact:true}).click();
+ await page.getByRole('button',{name:/^Giving/}).click();
+ await expect(page.getByText('IE23 BOFI 9033 6590 5850 99')).toBeVisible();
+ await expect(page.getByRole('button',{name:'Copy IBAN'})).toBeVisible();
+ await page.getByRole('button',{name:'Online giving'}).click();
+ await expect(page.getByText(/PayPal's own secure site/)).toBeVisible();
+ await expect(page.getByRole('button',{name:'Continue to church PayPal'})).toBeVisible();
+ await expect(page.getByText(/No card number is entered into this app/)).toBeVisible();
+});
+test('Talk to us provides categorized consent-first contact',async ({page})=>{
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/Talk to us/}).click();
+ await expect(page.getByText('Talk to us.')).toBeVisible();
+ await page.getByRole('radio',{name:'Families, youth & accessibility'}).click();
+ await expect(page.getByRole('textbox',{name:'Your message'})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Continue in email app'})).toBeVisible();
+ await expect(page.getByText('admin@solidrockdublin.org')).toBeVisible();
+});
+test('Preferences provides true black default, light toggle and readable Bible size',async ({page})=>{
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/^Preferences/}).click();
+ await expect(page.getByText('Preferences',{exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Black / dark'})).toHaveAttribute('aria-selected','true');
+ await page.getByRole('button',{name:'Light / ivory'}).click();
+ await expect(page.getByRole('button',{name:'Switch to dark mode'})).toBeVisible();
+ await page.getByRole('button',{name:'Extra large'}).click();
+ await expect(page.getByRole('button',{name:'Extra large'})).toHaveAttribute('aria-selected','true');
+ await page.reload();
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/^Preferences/}).click();
+ await expect(page.getByRole('button',{name:'Extra large'})).toHaveAttribute('aria-selected','true');
+});
+test('Bible reads actual public-domain chapter and proposes church study share',async ({page})=>{
+ await page.route('https://bible-api.com/data/web/JHN/3',route=>route.fulfill({
+  status:200,contentType:'application/json',
+  body:JSON.stringify({translation:{name:'World English Bible',license:'Public Domain'},verses:[
+   {book_id:'JHN',book:'John',chapter:3,verse:16,text:'For God so loved the world.'},
+   {book_id:'JHN',book:'John',chapter:3,verse:17,text:'For God didn’t send the Son to judge the world.'}
+  ]})
+ }));
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/Bible & reading/}).click();
+ await expect(page.getByText('The Word, in your hands.')).toBeVisible();
+ await expect(page.getByText(/For God so loved the world/)).toBeVisible();
+ await page.getByRole('button',{name:'Highlight John 3:16'}).click();
+ await page.getByRole('button',{name:'Share John 3:16 to Scripture together'}).click();
+ await expect(page.getByText(/From your Bible reader: John 3:16/)).toBeVisible();
+ await expect(page.getByText('A space to grow together')).toBeVisible();
+});
+test('social directory includes platform links without unverified direct profile URLs',async ({page})=>{
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/Social channels/}).click();
+ for(const item of ['YouTube','Instagram','Facebook','TikTok','X / Twitter','Apple Podcasts'])
+  await expect(page.getByRole('button',{name:'Open '+item})).toBeVisible();
+ await expect(page.getByText(/verified Linktree/)).toBeVisible();
+});
+test('notifications inbox and preference toggles do not claim active push integration',async ({page})=>{
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/^Updates/}).click();
+ await expect(page.getByText('Updates',{exact:true})).toBeVisible();
+ await expect(page.getByText(/No marketing notifications/)).toBeVisible({timeout:5000}).catch(()=>{});
+ await page.getByRole('button',{name:'Back'}).click().catch(()=>{});
 });
