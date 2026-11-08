@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CHURCH_NAME, CHURCH_URL, INTRO, sampleEvents, sampleMessages } from './src/content';
 import { theme as T } from './src/theme';
 import MemberHub from './src/MemberHub';
+import { cloudEnabled, getPublicContent } from './src/backend';
 
 type Tab = 'Home' | 'Watch' | 'Events' | 'Give' | 'More';
 type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'My interests' | 'Church hub' | null;
@@ -51,6 +52,8 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [prayer, setPrayer] = useState('');
+  const [remote, setRemote] = useState<Awaited<ReturnType<typeof getPublicContent>> | null>(null);
+  useEffect(() => { if (!cloudEnabled) return; let mounted=true; getPublicContent().then(d=>{if(mounted)setRemote(d);}).catch(()=>{}); return ()=>{mounted=false;}; }, []);
   useEffect(() => {
     let alive = true;
     AsyncStorage.getItem(STORAGE).then(raw => {
@@ -90,6 +93,7 @@ function AppContent() {
         <Pressable style={s.quick} onPress={() => goTab('Events')} accessibilityRole="button"><Text style={s.quickIcon}>▦</Text><Text style={s.quickTitle}>Events</Text><Text style={s.quickMeta}>Gather together</Text></Pressable>
         <Pressable style={s.quick} onPress={() => goPage('Prayer')} accessibilityRole="button"><Text style={s.quickIcon}>♡</Text><Text style={s.quickTitle}>Prayer</Text><Text style={s.quickMeta}>Find support</Text></Pressable>
       </View>
+      {remote?.announcements?.length ? <><SectionHeading title="Church announcements"/>{remote.announcements.slice(0,2).map(a=><Surface key={a.id}><Text style={s.cardTitle}>{a.title}</Text><Text style={s.body}>{a.body}</Text></Surface>)}</> : null}
       <SectionHeading title="This week" action="All events" onAction={() => goTab('Events')}/>
       <Surface><Tag>WEEKLY WORSHIP</Tag><Text style={s.cardTitle}>Gather with us this Sunday</Text><Text style={s.body}>Come as you are. See the latest service time and location on the official church website.</Text><PrimaryButton label="Service details  ↗" outline onPress={openOfficialSite}/></Surface>
       <SectionHeading title="Grow in the Word" action="Explore" onAction={() => goTab('Watch')}/>
@@ -102,6 +106,7 @@ function AppContent() {
     return <>
       <Text style={s.pageTitle}>Watch & grow</Text><Text style={s.pageIntro}>Worship, teaching and Scripture for every day.</Text>
       <View style={s.mediaHero}><Text style={s.livePill}>● WORSHIP ONLINE</Text><Text style={s.mediaTitle}>Join our community{ '\n' }in worship</Text><Text style={s.mediaSub}>Official services and the latest messages are available through the church.</Text><PrimaryButton label="Visit official media  ↗" onPress={openOfficialSite}/></View>
+      {remote?.sermons?.length ? <><SectionHeading title="Church sermons"/>{remote.sermons.map(m=><Surface key={m.id}><Tag>{m.series||'SERMON'}</Tag><Text style={s.cardTitle}>{m.title}</Text><Text style={s.body}>{m.description}</Text><Text style={s.meta}>{[m.speaker,m.passage].filter(Boolean).join(' · ')}</Text>{m.media_url?.startsWith('https://')?<PrimaryButton label="Open sermon  ↗" outline onPress={()=>{void Linking.openURL(m.media_url!);}}/>:null}</Surface>)}</> : null}
       <SectionHeading title="Study guides"/><TextInput accessibilityLabel="Search study guides" value={search} onChangeText={setSearch} placeholder="Search topics or Scripture" placeholderTextColor={T.muted} style={s.input}/>
       {filtered.map(m => <Surface key={m.id}><Tag>{m.series}</Tag><Text style={s.cardTitle}>{m.title}</Text><Text style={s.body}>{m.description}</Text><Text style={s.meta}>{m.passage}</Text><Pressable accessibilityRole="button" onPress={() => toggleBookmark(m.id)}><Text style={s.action}>{preferences.bookmarks.includes(m.id) ? '★ Saved to this device' : '☆ Save reading guide'}</Text></Pressable></Surface>)}
       {filtered.length === 0 && <Text style={s.body}>No guides match your search.</Text>}
@@ -112,6 +117,7 @@ function AppContent() {
   function Events() {
     return <><Text style={s.pageTitle}>Gather together</Text><Text style={s.pageIntro}>Discover ways to connect with your church community.</Text>
       <Surface><Tag>PLAN YOUR WEEK</Tag><Text style={s.cardTitle}>Church calendar</Text><Text style={s.body}>Explore current services and activities on the official church website. The starter cards below are illustrative weekly activities.</Text><PrimaryButton label="View church schedule  ↗" onPress={openOfficialSite}/></Surface>
+      {remote?.events?.length ? <><SectionHeading title="Verified church events"/>{remote.events.map(ev=><Surface key={ev.id}><Text style={s.cardTitle}>{ev.title}</Text><Text style={s.body}>{ev.description}</Text><Text style={s.meta}>{new Date(ev.starts_at).toLocaleString('en-IE')} {ev.venue||''}</Text>{ev.registration_enabled?<PrimaryButton label="Register in Church hub" outline onPress={()=>goPage('Church hub')}/>:null}</Surface>)}</> : null}
       <SectionHeading title="Explore gatherings"/>
       {sampleEvents.map(ev => {
         const added = preferences.interests.includes(ev.id);
