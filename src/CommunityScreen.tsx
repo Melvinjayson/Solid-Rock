@@ -6,7 +6,7 @@ import {theme as T} from './theme';
 import {COMMUNITY_PREVIEW,listChannels,getMyChannelMemberships,getMessages,joinChannel,leaveChannel,sendMessage,reportMessage,blockMember,listenToMessages,
  type CommunityChannel,type CommunityMessage,type ChannelKind,sendReply,togglePrayerSupport,getPrayerSupportCounts} from './community';
 
-type Props={onAccount:()=>void;onVisit:()=>void};
+type Props={onAccount:()=>void;onVisit:()=>void;studyShare?:string|null};
 const kindIcon:Record<ChannelKind,IconName>={announcements:'bell',discussion:'chat',prayer:'prayer',study:'book'};
 function channelIcon(x:{slug:string;kind:ChannelKind}):IconName{return x.slug==='serve-together'?'people':kindIcon[x.kind];}
 const prompts:Record<ChannelKind,string>={
@@ -17,7 +17,7 @@ const prompts:Record<ChannelKind,string>={
 };
 function readableError(e:unknown){return e instanceof Error?e.message:'Unable to connect to the community.';}
 function time(s:string){return new Date(s).toLocaleString('en-IE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}
-export default function CommunityScreen({onAccount,onVisit}:Props){
+export default function CommunityScreen({onAccount,onVisit,studyShare}:Props){
  const [channels,setChannels]=useState<CommunityChannel[]>([]);
  const [current,setCurrent]=useState<string|null>(null);
  const [membership,setMembership]=useState<string[]>([]);
@@ -30,6 +30,11 @@ export default function CommunityScreen({onAccount,onVisit}:Props){
  const [replyTo,setReplyTo]=useState<string|null>(null);
  const [prayerCounts,setPrayerCounts]=useState<Record<string,number>>({});
  const [filter,setFilter]=useState<'all'|'prayer'|'discussion'|'study'>('all');
+ useEffect(()=>{
+  if(!studyShare)return;
+  const id=cloudEnabled?channels.find(ch=>ch.slug==='scripture-together')?.id:'preview-3';
+  if(id){setCurrent(id);setText('For our study of '+studyShare+', what stood out to you?');}
+ },[studyShare,channels]);
  const styles=makeStyles();
  const active=(cloudEnabled?channels:COMMUNITY_PREVIEW.map((x,i)=>({...x,id:'preview-'+i,is_locked:false}))).find(x=>x.id===current)||null;
  const signedIn=Boolean(user);
@@ -140,6 +145,7 @@ export default function CommunityScreen({onAccount,onVisit}:Props){
   </> : <>
    <Pressable accessibilityRole="button" accessibilityLabel="Back to community channels" onPress={()=>setCurrent(null)}
      style={styles.back}><AppIcon name="back" size={19} color={T.gold}/><Text style={styles.backText}>Community</Text></Pressable>
+   {studyShare&&active.slug==='scripture-together'&&<View style={styles.guidelines}><AppIcon name="book" size={18} color={T.gold}/><Text style={styles.guidelineText}>From your Bible reader: {studyShare}. Join the Scripture channel to discuss this passage with your church family.</Text></View>}
    <View style={styles.head}><Text style={styles.kicker}>{active.kind==='prayer'?'PRAY TOGETHER':active.kind==='announcements'?'CHURCH LED':'SHARED SPACE'}</Text>
      <Text style={styles.title}>{active.title}</Text><Text style={styles.intro}>{active.description}</Text></View>
    <View style={styles.guidelines}><AppIcon name="shield" size={19} color={T.gold}/>
