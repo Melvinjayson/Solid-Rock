@@ -17,6 +17,17 @@ Open the Expo development server using Android Emulator, iOS Simulator (macOS), 
 npm run typecheck
 ```
 
+## Verified church media and social integration
+
+- Watch offers **in-app YouTube playback** for the official channel's curated playlists, short clips and individual Sunday recordings. An in-app LIVE player activates only when the church-owned YouTube Data API reports an active broadcast.
+- Public recent YouTube uploads and the church website's devotional links are automatically fetched by the read-only, cached `api/content.js` Vercel endpoint. This works without member authentication, payment infrastructure or a YouTube API key.
+- Instagram feed cards and reels are implemented, but real posts require church-approved Meta professional account credentials on the **server**. Until then the app offers the verified Instagram profile link and never fabricates posts.
+- Ministry imagery comes from the church website, with image-failure fallbacks.
+- Android/iOS media embeds use `react-native-webview`, while Expo Web uses YouTube iframe players.
+- App-store build profiles and guarded, verified-owner native bundle IDs are documented, but no mobile store listing has been updated.
+
+Read [social integrations and store release](docs/SOCIAL_MEDIA_AND_STORES.md) before attempting to configure credentials or publish. Never put API keys in `EXPO_PUBLIC_` variables.
+
 ## Latest expanded implementation
 
 The repository now also includes:
@@ -46,7 +57,7 @@ The repository now also includes:
 
 - Actual church event calendar, registration and attendance records
 - Member authentication, ChMeetings data sync and household accounts
-- Livestream/sermon feeds and digital Bible text distribution
+- Live-status detection requires server-side YouTube Data API credentials; the church YouTube RSS feed and embedded playlists already work. Licensed digital Bible text distribution
 - Payment processing, statements and financial reconciliation
 - Pastoral appointments, live prayer submissions and push notification delivery
 - Admin console, backend APIs and app-store builds
