@@ -1,5 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useFonts } from 'expo-font';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import AppIcon, {type IconName} from './src/AppIcon';
+import Onboarding from './src/Onboarding';
+import CommunityScreen from './src/CommunityScreen';
 import { Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { Mulish_400Regular, Mulish_700Bold } from '@expo-google-fonts/mulish';
 import {
@@ -15,12 +19,14 @@ import YouTubePlayer from './src/YouTubePlayer';
 import { loadMediaFeed, YOUTUBE_CHANNEL, YOUTUBE_LIVE, INSTAGRAM_CHANNEL, OFFICIAL_PLAYLISTS, type MediaFeed } from './src/mediaFeed';
 import { cloudEnabled, getPublicContent } from './src/backend';
 
-type Tab = 'Home' | 'Watch' | 'Events' | 'Give' | 'More';
-type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'Privacy' | 'My interests' | 'Church hub' | 'Social' | null;
-const tabs: { name: Tab; icon: string }[] = [
-  { name: 'Home', icon: '⌂' }, { name: 'Watch', icon: '▶' },
-  { name: 'Events', icon: '▦' }, { name: 'Give', icon: '♡' }, { name: 'More', icon: '☰' },
+type Tab = 'Home' | 'Watch' | 'Community' | 'Events' | 'More';
+type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'Privacy' | 'Giving' | 'My interests' | 'Church hub' | 'Social' | null;
+const tabs: { name: Tab; icon:IconName }[] = [
+  {name:'Home',icon:'home'},{name:'Watch',icon:'watch'},
+  {name:'Community',icon:'community'},{name:'Events',icon:'events'},
+  {name:'More',icon:'more'}
 ];
+const WELCOME_KEY='@solidrock:welcome:v1';
 const STORAGE = '@solidrock:preferences:v1';
 type Preferences = { interests: string[]; bookmarks: string[] };
 const EMPTY: Preferences = { interests: [], bookmarks: [] };
@@ -50,22 +56,25 @@ function MinistryImage({asset,name}:{asset:keyof typeof churchAssets;name:string
       accessibilityLabel={name+' ministry photograph from the official church website'}
       style={{width:'100%',height:155,borderRadius:12}}/>;
 }
-function Header({ onAbout, mode, toggleMode }: { onAbout: () => void; mode:ThemeMode; toggleMode:()=>void }) {
+function Header({ onAbout, mode, toggleMode, onCommunity }: { onAbout: () => void; mode:ThemeMode; toggleMode:()=>void;onCommunity:()=>void }) {
   const [logoFailed,setLogoFailed]=useState(false);
   useEffect(()=>setLogoFailed(false),[mode]);
   return <View style={s.topbar}>{logoFailed ? <View style={s.mark}><Text style={s.markText}>SR</Text></View> : <Image source={{uri:mode==='dark'?churchAssets.logoDark:churchAssets.logoLight}} onError={()=>setLogoFailed(true)} style={{height:49,width:55}} resizeMode="contain" accessibilityLabel="Solid Rock Dublin official logo"/>}
-    <View style={{ flex: 1 }}><Text style={s.brand}>{CHURCH_NAME}</Text><Text style={s.subBrand}>LOVING GOD · SERVING THE WORLD</Text></View>
-    <Pressable accessibilityLabel={mode==='dark'?'Switch to light mode':'Switch to dark mode'} accessibilityRole="button" accessibilityHint="Changes the app colour theme" onPress={toggleMode} style={s.info}><Text style={{color:T.ink,fontSize:16}}>{mode==='dark'?'☼':'☾'}</Text></Pressable>
-    <Pressable accessibilityLabel="About Solid Rock" accessibilityRole="button" onPress={onAbout} style={s.info}><Text style={{ color: T.brand, fontWeight: '800' }}>i</Text></Pressable>
+    <View style={{ flex: 1 }}><Text style={s.brand}>{CHURCH_NAME}</Text><Text style={s.subBrand}>YOUR CHURCH. EVERY DAY.</Text></View>
+    <Pressable accessibilityLabel={mode==='dark'?'Switch to light mode':'Switch to dark mode'} accessibilityRole="button" accessibilityHint="Changes the app colour theme" onPress={toggleMode} style={s.info}><AppIcon name={mode==='dark'?'sun':'moon'} size={19} color={T.ink}/></Pressable>
+    <Pressable accessibilityLabel="Open community" accessibilityRole="button" onPress={onCommunity} style={s.info}><AppIcon name="chat" size={19} color={T.gold}/></Pressable>
   </View>;
 }
 function AppContent() {
   const { width } = useWindowDimensions();
   const [mode,setMode]=useState<ThemeMode>('dark');
+  const [onboarding,setOnboarding]=useState<'loading'|'show'|'done'>('loading');
   setActiveTheme(mode);
   s=makeStyles();
   useEffect(()=>{let mounted=true;AsyncStorage.getItem('@solidrock:theme').then(v=>{if(mounted&&(v==='light'||v==='dark'))setMode(v);}).catch(()=>{});return()=>{mounted=false;};},[]);
   function toggleMode(){const next=mode==='dark'?'light':'dark';setMode(next);void AsyncStorage.setItem('@solidrock:theme',next).catch(()=>{});}
+  useEffect(()=>{let alive=true;AsyncStorage.getItem(WELCOME_KEY).then(x=>{if(alive)setOnboarding(x==='done'?'done':'show');}).catch(()=>{if(alive)setOnboarding('show');});return()=>{alive=false;};},[]);
+  function finishOnboarding(interest:'faith'|'community'|'media'|'events'|null){setOnboarding('done');void AsyncStorage.setItem(WELCOME_KEY,'done').catch(()=>{});setTab(interest==='community'?'Community':interest==='media'?'Watch':interest==='events'?'Events':'Home');}
   const [tab, setTab] = useState<Tab>('Home');
   const [page, setPage] = useState<Page>(null);
   const [preferences, setPreferences] = useState<Preferences>(EMPTY);
@@ -122,9 +131,9 @@ function AppContent() {
         <PrimaryButton label="Plan your visit  ↗" onPress={()=>{void Linking.openURL(VISIT_URL);}}/>
       </View></ImageBackground>
       <View style={s.quickRow}>
-        <Pressable style={s.quick} onPress={() => goTab('Watch')} accessibilityRole="button"><Text style={s.quickIcon}>▶</Text><Text style={s.quickTitle}>Watch</Text><Text style={s.quickMeta}>Worship & study</Text></Pressable>
-        <Pressable style={s.quick} onPress={() => goTab('Events')} accessibilityRole="button"><Text style={s.quickIcon}>▦</Text><Text style={s.quickTitle}>Events</Text><Text style={s.quickMeta}>Gather together</Text></Pressable>
-        <Pressable style={s.quick} onPress={() => goPage('Prayer')} accessibilityRole="button"><Text style={s.quickIcon}>♡</Text><Text style={s.quickTitle}>Prayer</Text><Text style={s.quickMeta}>Find support</Text></Pressable>
+        <Pressable style={s.quick} onPress={() => goTab('Watch')} accessibilityRole="button"><AppIcon name="watch" size={25} color={T.gold}/><Text style={s.quickTitle}>Watch</Text><Text style={s.quickMeta}>Worship & study</Text></Pressable>
+        <Pressable style={s.quick} onPress={() => goTab('Events')} accessibilityRole="button"><AppIcon name="events" size={25} color={T.gold}/><Text style={s.quickTitle}>Events</Text><Text style={s.quickMeta}>Gather together</Text></Pressable>
+        <Pressable style={s.quick} onPress={() => goPage('Prayer')} accessibilityRole="button"><AppIcon name="prayer" size={25} color={T.gold}/><Text style={s.quickTitle}>Prayer</Text><Text style={s.quickMeta}>Find support</Text></Pressable>
       </View>
       {remote?.announcements?.length ? <><SectionHeading title="Church announcements"/>{remote.announcements.slice(0,2).map(a=><Surface key={a.id}><Text style={s.cardTitle}>{a.title}</Text><Text style={s.body}>{a.body}</Text></Surface>)}</> : null}
       <SectionHeading title="This week" action="All events" onAction={() => goTab('Events')}/>
@@ -260,6 +269,7 @@ function AppContent() {
       { title: 'Prayer & care', desc: 'Private pastoral contact information', target: 'Prayer' },
       { title: 'Fellowships & ministries', desc: 'Connect and discover ways to serve', target: 'Groups' },
       { title: 'Church hub', desc: 'Membership, events, groups, pastoral care and reading plans', target: 'Church hub' },
+      { title: 'Giving', desc: 'Support the church through verified giving information', target: 'Giving' },
       { title: 'Community feed', desc: 'Church videos, Instagram posts and website news', target: 'Social' },
       { title: 'My saved items', desc: 'Local event interests and study bookmarks', target: 'My interests' },
       { title: 'About Solid Rock', desc: 'Find our church and plan a visit', target: 'About' },
@@ -270,7 +280,7 @@ function AppContent() {
     ];
     return <><Text style={s.pageTitle}>More to explore</Text><Text style={s.pageIntro}>Faith, community and helpful resources.</Text>
       {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.external ? void Linking.openURL(l.title==='Prayer & fasting devotionals'?'https://solidrockdublin.org/devotional/day-2-repentance-and-surrender':l.title==='Official YouTube'?YOUTUBE_CHANNEL:l.title==='Official Instagram'?INSTAGRAM_CHANNEL:CHURCH_URL) : goPage(l.target ?? null)}>
-        <View style={{ flex: 1 }}><Text style={s.menuTitle}>{l.title}</Text><Text style={s.menuDesc}>{l.desc}</Text></View><Text style={s.chevron}>›</Text>
+        <View style={{ flex: 1 }}><Text style={s.menuTitle}>{l.title}</Text><Text style={s.menuDesc}>{l.desc}</Text></View><AppIcon name="chevron" size={18} color={T.muted}/>
       </Pressable>)}
       <Text style={s.disclaimer}>Member accounts, financial statements and pastoral bookings require approved integrations and are not enabled in this MVP.</Text>
     </>;
@@ -279,6 +289,7 @@ function AppContent() {
   function Detail() {
     return <><Pressable accessibilityRole="button" onPress={() => goPage(null)} style={{ marginBottom: 22 }}><Text style={s.action}>← Back</Text></Pressable>
       {page === 'Church hub' ? <MemberHub/> : <Text style={s.pageTitle}>{page}</Text>}
+      {page === 'Giving' && Give()}
       {page === 'Social' && <>
         <Text style={s.pageIntro}>Latest public updates from the church and its official channels. Posts load from approved sources when available.</Text>
         <Surface><Text style={s.cardTitle}>Solid Rock Centre on YouTube</Text>
@@ -334,44 +345,60 @@ function AppContent() {
     </>;
   }
 
-  return <SafeAreaView style={s.safe} edges={['top', 'bottom']}><StatusBar barStyle={mode==='dark'?'light-content':'dark-content'} backgroundColor={T.white}/>
-    <Header onAbout={() => goPage('About')} mode={mode} toggleMode={toggleMode}/>
-    {loading ? <View style={s.loading}><ActivityIndicator color={T.brand}/></View> : <>
-      <ScrollView ref={scrollRef} key={page ?? tab} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.scrollContent, { width: contentWidth, alignSelf: 'center' }]}>{page ? Detail() : tab === 'Home' ? Home() : tab === 'Watch' ? Watch() : tab === 'Events' ? Events() : tab === 'Give' ? Give() : More()}</ScrollView>
-      <View style={s.tabBar}>{tabs.map(t => <Pressable key={t.name} accessibilityRole="tab" accessibilityState={{ selected: tab === t.name && !page }} accessibilityLabel={t.name} onPress={() => goTab(t.name)} style={s.tab}>
-        <Text style={[s.tabIcon, tab === t.name && !page && s.active]}>{t.icon}</Text><Text style={[s.tabText, tab === t.name && !page && s.active]}>{t.name}</Text></Pressable>)}</View>
+  return <SafeAreaView style={s.safe} edges={['top','bottom']}>
+    <StatusBar barStyle={mode==='dark'?'light-content':'dark-content'} backgroundColor={T.background}/>
+    {onboarding==='loading'?<View style={s.loading}><ActivityIndicator color={T.gold}/></View>:
+    onboarding==='show'?<Onboarding onFinish={finishOnboarding}/>:
+    <>
+      <Header onAbout={()=>goPage('About')} onCommunity={()=>goTab('Community')} mode={mode} toggleMode={toggleMode}/>
+      {loading?<View style={s.loading}><ActivityIndicator color={T.gold}/></View>:<>
+        <ScrollView ref={scrollRef} key={page ?? tab} keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[s.scrollContent,{width:contentWidth,alignSelf:'center'}]}>
+          {page?Detail():tab==='Home'?Home():tab==='Watch'?Watch():
+            tab==='Community'?<CommunityScreen onAccount={()=>goPage('Church hub')} onVisit={()=>goPage('About')}/>:
+            tab==='Events'?Events():More()}
+        </ScrollView>
+        <View style={s.tabBar}>{tabs.map(t=>{
+          const active=tab===t.name&&!page;
+          return <Pressable key={t.name} accessibilityRole="tab" accessibilityState={{selected:active}} accessibilityLabel={t.name}
+            onPress={()=>goTab(t.name)} style={[s.tab,active&&s.tabSelected]}>
+            <AppIcon name={t.icon} size={22} color={active?T.gold:T.muted} filled={active}/>
+            <Text style={[s.tabText,active&&s.active]}>{t.name}</Text>
+          </Pressable>;
+        })}</View>
+      </>}
     </>}
   </SafeAreaView>;
 }
-export default function App() { const [fontsLoaded] = useFonts({ Poppins_700Bold, Mulish_400Regular, Mulish_700Bold }); return <SafeAreaProvider>{fontsLoaded ? <AppContent/> : <View style={{flex:1,backgroundColor:'#100F0D',justifyContent:'center',alignItems:'center'}}><ActivityIndicator color='#C9A24A'/></View>}</SafeAreaProvider>; }
+export default function App() { const [fontsLoaded] = useFonts({ Poppins_700Bold, Mulish_400Regular, Mulish_700Bold,...Ionicons.font }); return <SafeAreaProvider>{fontsLoaded ? <AppContent/> : <View style={{flex:1,backgroundColor:'#100F0D',justifyContent:'center',alignItems:'center'}}><ActivityIndicator color='#C9A24A'/></View>}</SafeAreaProvider>; }
 
 let s: ReturnType<typeof makeStyles>;
 function makeStyles(){return StyleSheet.create({
   safe: { flex: 1, backgroundColor: T.background },
-  topbar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 13, gap: 11, borderBottomWidth: 1, borderBottomColor: T.border },
+  topbar: { flexDirection:'row',alignItems:'center',paddingHorizontal:18,paddingVertical:12,gap:11,backgroundColor:T.background },
   mark: { backgroundColor: T.pale, width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   markText: { fontSize: 16, color: T.gold, fontWeight: '900', letterSpacing: -1 },
   brand: { fontFamily:'Poppins_700Bold', color: T.ink, fontSize: 17, fontWeight: '800', letterSpacing: -0.5 },
   subBrand: { fontFamily:'Mulish_400Regular', fontSize: 9, color: T.muted, fontWeight: '700', letterSpacing: 1.35, marginTop: 3 },
   info: { borderRadius: 20, borderWidth: 1, borderColor: T.border, width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  scrollContent: { paddingTop: 20, paddingBottom: 32, gap: 14 },
+  scrollContent: { paddingTop:18,paddingBottom:36,gap:17 },
   hero: { borderRadius: 25, padding: 25, backgroundColor: 'rgba(15,13,10,0.70)', gap: 15, minHeight:300, justifyContent:'center' },
   heroTitle: { fontFamily:'Poppins_700Bold', color: T.ink, fontWeight: '900', fontSize: 35, lineHeight: 42, letterSpacing: -1.3 },
   heroCopy: { fontFamily:'Mulish_400Regular', color: T.muted, fontSize: 15, lineHeight: 23 },
-  button: { alignItems: 'center', justifyContent: 'center', backgroundColor: T.brand, borderRadius: 13, minHeight: 48, paddingHorizontal: 18, paddingVertical: 12, marginTop: 6 },
+  button: {alignItems:'center',justifyContent:'center',backgroundColor:T.gold,borderRadius:16,minHeight:50,paddingHorizontal:19,paddingVertical:12,marginTop:6},
   buttonOutline: { backgroundColor: T.white, borderWidth: 1, borderColor: T.border },
-  buttonText: { color: T.background, fontWeight: '700', fontSize: 14 },
+  buttonText: {color:'#16110A',fontFamily:'Mulish_700Bold',fontSize:14},
   quickRow: { flexDirection: 'row', gap: 10 },
-  quick: { flex: 1, paddingVertical: 18, paddingHorizontal: 11, backgroundColor: T.white, borderWidth: 1, borderColor: T.border, borderRadius: 17, minWidth: 0 },
+  quick: {flex:1,paddingVertical:20,paddingHorizontal:12,backgroundColor:T.white,borderWidth:1,borderColor:T.border,borderRadius:22,minWidth:0,gap:5},
   quickIcon: { fontSize: 22, color: T.blue, marginBottom: 8 },
   quickTitle: { fontFamily:'Poppins_700Bold', fontSize: 14, fontWeight: '800', color: T.ink },
-  quickMeta: { fontFamily:'Mulish_400Regular', color: T.muted, fontSize: 10, marginTop: 4 },
+  quickMeta: {fontFamily:'Mulish_400Regular',color:T.muted,fontSize:10,marginTop:2},
   headingRow: { marginTop: 12, marginBottom: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   heading: { fontFamily:'Poppins_700Bold', color: T.ink, fontWeight: '800', fontSize: 21, letterSpacing: -0.5 },
   action: { fontFamily:'Mulish_400Regular', color: T.blue, fontSize: 13, fontWeight: '700', paddingVertical: 6 },
-  surface: { backgroundColor: T.white, borderWidth: 1, borderColor: T.border, borderRadius: 19, padding: 19, gap: 10 },
-  tag: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#DFE8F9' },
-  tagText: { fontFamily:'Mulish_400Regular', color: T.brand, fontSize: 10, fontWeight: '800', letterSpacing: 0.75 },
+  surface: { backgroundColor:T.white,borderWidth:1,borderColor:T.border,borderRadius:23,padding:19,gap:12 },
+  tag: { alignSelf:'flex-start',paddingHorizontal:12,paddingVertical:7,borderRadius:12,backgroundColor:T.pale },
+  tagText: { fontFamily:'Mulish_700Bold', color: T.gold, fontSize: 10, fontWeight: '800', letterSpacing: 0.75 },
   cardTitle: { fontFamily:'Poppins_700Bold', color: T.ink, fontSize: 20, fontWeight: '800', lineHeight: 26, letterSpacing: -0.4 },
   body: { fontFamily:'Mulish_400Regular', color: T.muted, fontSize: 14, lineHeight: 22 },
   kicker: { color: T.blue, fontSize: 10, fontWeight: '800', letterSpacing: 1 },
