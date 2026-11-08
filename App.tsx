@@ -219,7 +219,7 @@ function AppContent() {
   return <SafeAreaView style={s.safe} edges={['top', 'bottom']}><StatusBar barStyle={mode==='dark'?'light-content':'dark-content'} backgroundColor={T.white}/>
     <Header onAbout={() => goPage('About')} mode={mode} toggleMode={toggleMode}/>
     {loading ? <View style={s.loading}><ActivityIndicator color={T.brand}/></View> : <>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.scrollContent, { width: contentWidth, alignSelf: 'center' }]}>{page ? Detail() : tab === 'Home' ? Home() : tab === 'Watch' ? Watch() : tab === 'Events' ? Events() : tab === 'Give' ? Give() : More()}</ScrollView>
+      <ScrollView key={page ?? tab} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.scrollContent, { width: contentWidth, alignSelf: 'center' }]}>{page ? Detail() : tab === 'Home' ? Home() : tab === 'Watch' ? Watch() : tab === 'Events' ? Events() : tab === 'Give' ? Give() : More()}</ScrollView>
       <View style={s.tabBar}>{tabs.map(t => <Pressable key={t.name} accessibilityRole="tab" accessibilityState={{ selected: tab === t.name && !page }} accessibilityLabel={t.name} onPress={() => goTab(t.name)} style={s.tab}>
         <Text style={[s.tabIcon, tab === t.name && !page && s.active]}>{t.icon}</Text><Text style={[s.tabText, tab === t.name && !page && s.active]}>{t.name}</Text></Pressable>)}</View>
     </>}
