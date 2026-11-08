@@ -46,3 +46,23 @@ test('study-guide search and local bookmark persist without login', async ({page
   await page.getByRole('tab',{name:'Watch',exact:true}).click();
   await expect(page.getByText(/Saved to this device/)).toBeVisible();
 });
+
+test('watch feature uses readable contrast on dark theme', async ({page}) => {
+  await page.getByRole('tab',{name:'Watch',exact:true}).click();
+  const title=page.getByText(/Join our community/).first();
+  await expect(title).toBeVisible();
+  await expect(title).toHaveCSS('color','rgb(255, 255, 255)');
+});
+test('local data deletion requires confirmation and resets preferences', async ({page}) => {
+  await page.getByRole('tab',{name:'Watch',exact:true}).click();
+  await page.getByRole('button',{name:'☆ Save reading guide'}).first().click();
+  await page.getByRole('tab',{name:'More',exact:true}).click();
+  await page.getByRole('button',{name:/Privacy and your data/}).click();
+  await page.getByRole('button',{name:'Clear locally saved preferences'}).click();
+  await expect(page.getByRole('button',{name:'Keep my saved data'})).toBeVisible();
+  await page.getByRole('button',{name:'Yes, clear this device'}).click();
+  await page.reload();
+  await page.getByRole('tab',{name:'Watch',exact:true}).click();
+  await expect(page.getByText('★ Saved to this device')).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'Switch to light mode'})).toBeVisible();
+});
