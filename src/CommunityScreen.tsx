@@ -8,6 +8,7 @@ import {COMMUNITY_PREVIEW,listChannels,getMyChannelMemberships,getMessages,joinC
 
 type Props={onAccount:()=>void;onVisit:()=>void};
 const kindIcon:Record<ChannelKind,IconName>={announcements:'bell',discussion:'chat',prayer:'prayer',study:'book'};
+function channelIcon(x:{slug:string;kind:ChannelKind}):IconName{return x.slug==='serve-together'?'people':kindIcon[x.kind];}
 const prompts:Record<ChannelKind,string>={
  announcements:'Official news and important messages from church leaders.',
  discussion:'A question for this week: what helped you grow?',
@@ -118,7 +119,7 @@ export default function CommunityScreen({onAccount,onVisit}:Props){
      <Text style={styles.count}>{list.length} channels</Text></View>
    {filtered.map(x=><Pressable key={x.id} accessibilityRole="button" accessibilityLabel={'Open '+x.title}
      style={({pressed})=>[styles.channel,pressed&&{opacity:.75}]} onPress={()=>{setCurrent(x.id);setConsent(false);setError('');}}>
-     <View style={styles.channelIcon}><AppIcon name={kindIcon[x.kind]} size={25} color={T.gold}/></View>
+     <View style={styles.channelIcon}><AppIcon name={channelIcon(x)} size={25} color={T.gold}/></View>
      <View style={{flex:1,gap:5}}><Text style={styles.channelTitle}>{x.title}</Text>
        <Text style={styles.channelDesc}>{x.description}</Text>
        <Text style={styles.channelMeta}>{x.kind==='announcements'?'CHURCH LED':x.kind==='prayer'?'PRAYER & SUPPORT':'OPEN DISCUSSION'}</Text>
@@ -144,7 +145,7 @@ export default function CommunityScreen({onAccount,onVisit}:Props){
    <View style={styles.guidelines}><AppIcon name="shield" size={19} color={T.gold}/>
      <Text style={styles.guidelineText}>Be kind. Respect privacy. Do not share confidential details, contact information or children's personal data. Report concerning posts to church moderators.</Text></View>
    {!cloudEnabled?<View style={styles.empty}>
-     <AppIcon name={kindIcon[active.kind]} color={T.gold} size={32}/><Text style={styles.emptyTitle}>A space to grow together</Text>
+     <AppIcon name={channelIcon(active)} color={T.gold} size={32}/><Text style={styles.emptyTitle}>A space to grow together</Text>
      <Text style={styles.channelDesc}>{prompts[active.kind]}</Text>
      <Text style={styles.channelDesc}>Live conversations are not enabled in this preview. No sample posts are presented as messages from real worshippers.</Text>
      <Pressable style={styles.secondary} onPress={()=>setCurrent(null)}><Text style={styles.secondaryText}>Explore other spaces</Text></Pressable>
