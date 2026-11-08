@@ -18,6 +18,9 @@ export default function Admin() {
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL, key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const client=useMemo<SupabaseClient|null>(()=>url&&key?createClient(url,key):null,[url,key]);
   const [email,setEmail]=useState(''),[code,setCode]=useState(''),[user,setUser]=useState<string|null>(null);
+  const [appearance,setAppearance]=useState<'dark'|'light'>('dark');
+  useEffect(()=>{const stored=window.localStorage.getItem('solidrock-admin-theme');if(stored==='light')setAppearance('light');},[]);
+  useEffect(()=>{document.body.dataset.theme=appearance;window.localStorage.setItem('solidrock-admin-theme',appearance);},[appearance]);
   const [roles,setRoles]=useState<string[]>([]),[module,setModule]=useState<Module>('announcements');
   const [form,setForm]=useState<Form>(empty),[rows,setRows]=useState<Row[]>([]);
   const [error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
@@ -97,7 +100,8 @@ export default function Admin() {
   }
 
   return <main className="shell">
-    <header className="top"><div style={{display:'flex',alignItems:'center'}}><div className="mark">SR</div><div><h1 className="title">Solid Rock · Operations</h1><div className="sub">Church-controlled content and community management</div></div></div>
+    <header className="top"><div style={{display:'flex',alignItems:'center'}}><div className="mark"><img width="42" height="42" style={{objectFit:'contain'}} alt="Solid Rock Dublin church logo" src={appearance==='dark'?'https://solidrockdublin.org/_next/image?url=%2Fimages%2Flogo-white.png&w=128&q=75':'https://solidrockdublin.org/_next/image?url=%2Fimages%2Flogo-blue.png&w=128&q=75'}/></div><div><h1 className="title">Solid Rock · Operations</h1><div className="sub">Church-controlled content and community management</div></div></div>
+      <button type="button" aria-label={appearance==='dark'?'Switch to light mode':'Switch to dark mode'} onClick={()=>setAppearance(v=>v==='dark'?'light':'dark')}>{appearance==='dark'?'☼ Light mode':'☾ Dark mode'}</button>
       {user&&<button type="button" onClick={()=>void client?.auth.signOut()}>Sign out</button>}
     </header>
     {!client?<div className="panel" style={{marginTop:24}}><h2>Configuration needed</h2><p className="sub">Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in the admin environment. Never use a service-role key in this browser.</p></div>:
