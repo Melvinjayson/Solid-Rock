@@ -35,7 +35,7 @@ test('five core tabs are visible and navigable', async ({page},testInfo) => {
 test('member hub gracefully degrades when backend is unavailable', async ({page},testInfo) => {
   await page.getByRole('tab',{name:'More',exact:true}).click();
   await page.getByRole('button',{name:/Church hub/}).click();
-  await expect(page.getByText('Church community')).toBeVisible();
+  await expect(page.getByText('Stay connected.')).toBeVisible();
   await expect(page.getByText('Offline experience')).toBeVisible();
   mkdirSync(folder,{recursive:true});
   await page.screenshot({path:`${folder}/${testInfo.project.name}-church-hub-dark.png`,fullPage:false});
