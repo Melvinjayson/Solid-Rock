@@ -205,3 +205,27 @@ test('inclusive personal faith journeys save progress without requiring membersh
  await page.getByRole('button',{name:/Your faith journey/}).click();
  await expect(page.getByText('1 of 7 reflections marked complete')).toBeVisible();
 });
+
+test('privacy erase removes Bible notes, faith progress, theme and reopens welcome',async ({page})=>{
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/Your faith journey/}).click();
+ await page.getByRole('checkbox',{name:'Mark reflection 1 complete'}).click();
+ await expect(page.getByText('1 of 7 reflections marked complete')).toBeVisible();
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/^Preferences/}).click();
+ await page.getByRole('radio',{name:'Light / ivory'}).click();
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/Privacy and your data/}).click();
+ await expect(page.getByText('Church account deletion')).toBeVisible();
+ await page.getByRole('button',{name:'Clear all app data on this device'}).click();
+ await expect(page.getByText(/erases all Solid Rock local preferences/)).toBeVisible();
+ await page.getByRole('button',{name:"Yes, erase this device's app data"}).click();
+ await expect(page.getByText('A community beyond Sunday.')).toBeVisible();
+ await page.reload();
+ await expect(page.getByText('A community beyond Sunday.')).toBeVisible();
+ await page.getByRole('button',{name:'Skip welcome guide'}).click();
+ await expect(page.getByRole('button',{name:'Switch to light mode'})).toBeVisible();
+ await page.getByRole('tab',{name:'More'}).click();
+ await page.getByRole('button',{name:/Your faith journey/}).click();
+ await expect(page.getByText('0 of 7 reflections marked complete')).toBeVisible();
+});
