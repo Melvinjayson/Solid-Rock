@@ -8,7 +8,7 @@ test.beforeEach(async ({page}) => {
 });
 test('official content, dark default and persistent theme toggle', async ({page},testInfo) => {
   await expect(page.getByText('Solid Rock Dublin').first()).toBeVisible();
-  await expect(page.getByText(/Sunday worship · 11:00 am/)).toBeVisible();
+  await expect(page.getByText(/Sunday worship · 11:00 am/).first()).toBeVisible();
   await expect(page.getByRole('button',{name:'Switch to light mode'})).toBeVisible();
   await page.getByRole('button',{name:'Switch to light mode'}).click();
   await expect(page.getByRole('button',{name:'Switch to dark mode'})).toBeVisible();
