@@ -63,6 +63,7 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [prayer, setPrayer] = useState('');
+  const [confirmErase,setConfirmErase]=useState(false);
   const [remote, setRemote] = useState<Awaited<ReturnType<typeof getPublicContent>> | null>(null);
   useEffect(() => { if (!cloudEnabled) return; let mounted=true; getPublicContent().then(d=>{if(mounted)setRemote(d);}).catch(()=>{}); return ()=>{mounted=false;}; }, []);
   useEffect(() => {
@@ -194,7 +195,12 @@ function AppContent() {
       {page === 'About' && <><Text style={s.pageIntro}>A welcoming community of faith in Dublin.</Text><Surface><Text style={s.cardTitle}>{CHURCH_NAME}</Text><Text style={s.body}>Visit the church's website for current directions, service times, ministries and contact information.</Text><PrimaryButton label="Visit solidrockdublin.org  ↗" onPress={openOfficialSite}/></Surface></>}
       {page === 'Privacy' && <><Text style={s.pageIntro}>Your information should be treated with care.</Text>
         <Surface><Text style={s.cardTitle}>What this preview stores</Text><Text style={s.body}>Saved interests, bookmarks, reading progress and your theme preference may be stored on your device. No payment data is collected in this preview.</Text><Text style={s.body}>Account details, registration, prayer requests and care records require an explicitly configured Solid Rock database. The current public preview is not connected to one.</Text></Surface>
-        <Surface><Text style={s.cardTitle}>Your choices and support</Text><Text style={s.body}>A church-approved privacy notice, deletion workflow and data retention schedule are required before inviting real members to share personal data.</Text><PrimaryButton label="Contact Solid Rock  ↗" onPress={()=>{void Linking.openURL('mailto:admin@solidrockdublin.org');}}/></Surface>
+        <Surface><Text style={s.cardTitle}>Your choices and support</Text><Text style={s.body}>A church-approved privacy notice, deletion workflow and data retention schedule are required before inviting real members to share personal data.</Text><PrimaryButton label="Contact Solid Rock  ↗" onPress={()=>{void Linking.openURL('mailto:admin@solidrockdublin.org');}}/>
+          {!confirmErase?<PrimaryButton label="Clear locally saved preferences" outline onPress={()=>setConfirmErase(true)}/>:
+            <><Text style={s.disclaimer}>This permanently clears local bookmarks, reading progress, saved event interest and appearance preferences on this device. It does not delete any separate church account.</Text>
+            <PrimaryButton label="Yes, clear this device" onPress={()=>{void (async()=>{try{await Promise.all([AsyncStorage.removeItem(STORAGE),AsyncStorage.removeItem('@solidrock:reading-progress:v1'),AsyncStorage.removeItem('@solidrock:theme')]);setPreferences(EMPTY);setMode('dark');setConfirmErase(false);}catch{Alert.alert('Unable to clear data','Please try again.');}})();}}/>
+            <PrimaryButton label="Keep my saved data" outline onPress={()=>setConfirmErase(false)}/></>}
+</Surface>
       </>}
       {page === 'My interests' && <><Text style={s.pageIntro}>Saved locally on this device, not connected to a church account.</Text>
         <SectionHeading title="Gatherings"/>{preferences.interests.length ? sampleEvents.filter(x => preferences.interests.includes(x.id)).map(x => <Surface key={x.id}><Text style={s.cardTitle}>{x.title}</Text><Pressable onPress={() => toggleInterest(x.id)}><Text style={s.action}>Remove from saved</Text></Pressable></Surface>) : <Text style={s.body}>No gatherings saved yet.</Text>}
