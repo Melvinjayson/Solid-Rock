@@ -20,11 +20,11 @@ export const theme: {
 }={...palettes.dark};
 export function setActiveTheme(mode:ThemeMode){Object.assign(theme,palettes[mode]);}
 export const churchAssets={
-  logoDark:'https://solidrockdublin.org/_next/image?url=%2Fimages%2Flogo-white.png&w=256&q=80',
-  logoLight:'https://solidrockdublin.org/_next/image?url=%2Fimages%2Flogo-blue.png&w=256&q=80',
-  worship:'https://solidrockdublin.org/_next/image?url=%2Fimages%2FDSC02972-scaled.jpg&w=1080&q=80',
-  community:'https://solidrockdublin.org/_next/image?url=%2Fimages%2FDSC02880-scaled.jpg&w=1080&q=80',
-  foodBank:'https://solidrockdublin.org/_next/image?url=%2Fimages%2Fministries%2Ffood-bank.jpg&w=800&q=80',
-  sundaySchool:'https://solidrockdublin.org/_next/image?url=%2Fimages%2Fministries%2Fyouth-sunday-school.jpeg&w=800&q=80',
-  spirituality:'https://solidrockdublin.org/_next/image?url=%2Fimages%2Fministries%2Fspirituality.jpg&w=800&q=80',
+  logoDark:'https://solidrockdublin.org/images/logo-white.png',
+  logoLight:'https://solidrockdublin.org/images/logo-blue.png',
+  worship:'https://solidrockdublin.org/images/DSC02972-scaled.jpg',
+  community:'https://solidrockdublin.org/images/DSC02880-scaled.jpg',
+  foodBank:'https://solidrockdublin.org/images/ministries/food-bank.jpg',
+  sundaySchool:'https://solidrockdublin.org/images/ministries/youth-sunday-school.jpeg',
+  spirituality:'https://solidrockdublin.org/images/ministries/spirituality.jpg',
 } as const;
