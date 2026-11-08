@@ -1,0 +1,233 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  churchDb, cloudEnabled, getPublicContent, requestEventRegistration, requestPastoralSlot,
+  sendPrayerRequest, joinGroup, volunteer, givingHistory, pastoralAvailability,
+  type Announcement, type ChurchEvent, type ChurchSermon, type ChurchGroup, type VolunteerOpportunity,
+  type GivingRecord, type PastoralSlot,
+} from './backend';
+import { theme as T } from './theme';
+
+type Section = 'Discover' | 'Account' | 'Events' | 'Community' | 'Care' | 'Giving' | 'Reading';
+const sections: Section[] = ['Discover','Account','Events','Community','Care','Giving','Reading'];
+type PublicData = Awaited<ReturnType<typeof getPublicContent>>;
+type PersonalReading = Record<string, number[]>;
+const READING_KEY='@solidrock:reading-progress:v1';
+const plans=[
+  { key:'grace', title:'Grace and gratitude', refs:['Ephesians 2:8–10','2 Corinthians 9:7','Romans 5:1','Psalm 100:4','Titus 3:5','Colossians 3:17','Psalm 136:1'] },
+  { key:'faith', title:'Rooted in faith', refs:['Colossians 2:6–7','Hebrews 11:1','James 2:17','Proverbs 3:5–6','Mark 9:24','Romans 10:17','Psalm 46:10'] },
+];
+const blank: PublicData={events:[],sermons:[],announcements:[],groups:[],opportunities:[]};
+
+function Card({title,children}:{title:string;children:React.ReactNode}) {
+  return <View style={styles.card}><Text style={styles.cardTitle}>{title}</Text>{children}</View>;
+}
+function CTA({title,onPress,disabled=false}:{title:string;onPress:()=>void;disabled?:boolean}) {
+  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress}
+    style={[styles.cta,disabled&&styles.disabled]}><Text style={styles.ctaText}>{title}</Text></Pressable>;
+}
+function Info({children}:{children:React.ReactNode}){return <Text style={styles.body}>{children}</Text>;}
+function fmt(date:string){try{return new Date(date).toLocaleString('en-IE',{dateStyle:'medium',timeStyle:'short'});}catch{return date;}}
+function safeMessage(e:unknown){return e instanceof Error?e.message:'Something went wrong. Please try again.';}
+async function officialLink(){try{await Linking.openURL('https://solidrockdublin.org/');}catch{Alert.alert('Website unavailable','Visit solidrockdublin.org directly.');}}
+
+export default function MemberHub() {
+  const [section,setSection]=useState<Section>('Discover');
+  const [data,setData]=useState<PublicData>(blank);
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState<string|null>(null);
+  const [userId,setUserId]=useState<string|null>(null);
+  const [userEmail,setUserEmail]=useState('');
+  const [email,setEmail]=useState('');
+  const [name,setName]=useState('');
+  const [prayer,setPrayer]=useState('');
+  const [giving,setGiving]=useState<GivingRecord[]>([]);
+  const [slots,setSlots]=useState<PastoralSlot[]>([]);
+  const [reading,setReading]=useState<PersonalReading>({});
+  const [savedRegistrations,setSavedRegistrations]=useState<string[]>([]);
+  const [savedGroups,setSavedGroups]=useState<string[]>([]);
+  const [savedOpportunities,setSavedOpportunities]=useState<string[]>([]);
+
+  const refresh=useCallback(async()=>{
+    if(!cloudEnabled) return;
+    setBusy(true);setError(null);
+    try{setData(await getPublicContent());}
+    catch(e){setError(safeMessage(e));}
+    finally{setBusy(false);}
+  },[]);
+  useEffect(()=>{
+    let live=true;
+    AsyncStorage.getItem(READING_KEY).then(v=>{if(live&&v) setReading(JSON.parse(v) as PersonalReading);})
+      .catch(()=>{});
+    const client=churchDb;
+    if(!client)return()=>{live=false;};
+    void client.auth.getUser().then(({data:{user}})=>{
+      if(!live)return;setUserId(user?.id??null);setUserEmail(user?.email??'');void refresh();
+    });
+    const {data:{subscription}}=client.auth.onAuthStateChange((_event,session)=>{
+      if(!live)return;setUserId(session?.user.id??null);setUserEmail(session?.user.email??'');
+    });
+    return()=>{live=false;subscription.unsubscribe();};
+  },[refresh]);
+
+  async function run(action:()=>Promise<void>,success:string){
+    setBusy(true);
+    try{await action();Alert.alert('Success',success);}
+    catch(e){Alert.alert('Unable to complete',safeMessage(e));}
+    finally{setBusy(false);}
+  }
+  async function saveReading(key:string,day:number) {
+    const existing=reading[key]??[];
+    const updated={...reading,[key]:existing.includes(day)?existing.filter(x=>x!==day):[...existing,day]};
+    setReading(updated);
+    try{await AsyncStorage.setItem(READING_KEY,JSON.stringify(updated));}
+    catch{Alert.alert('Save failed','Reading progress could not be stored on this device.');}
+    if(churchDb&&userId){
+      const {error:e}=await churchDb.from('reading_progress').upsert({user_id:userId,plan_key:key,completed_days:updated[key]},{onConflict:'user_id,plan_key'});
+      if(e) Alert.alert('Cloud sync not completed',e.message);
+    }
+  }
+  async function signIn() {
+    const target=email.trim();
+    if(!/^\S+@\S+\.\S+$/.test(target)){Alert.alert('Enter a valid email address');return;}
+    if(!churchDb){Alert.alert('Not configured','Membership sign-in requires the church Supabase project.');return;}
+    await run(async()=>{
+      const {error:e}=await churchDb!.auth.signInWithOtp({email:target,options:{shouldCreateUser:true}});
+      if(e)throw e;
+    },'Check your email for a sign-in link. Open it on a configured device to finish signing in.');
+  }
+  async function updateName() {
+    if(!churchDb||!userId)return;
+    if(!name.trim()){Alert.alert('Enter a display name');return;}
+    await run(async()=>{
+      const {error:e}=await churchDb!.from('profiles').upsert({id:userId,display_name:name.trim(),email:userEmail});
+      if(e)throw e;
+    },'Your profile was saved.');
+  }
+  async function loadPrivate() {
+    if(!userId)return;
+    setBusy(true);
+    try{
+      const [records,available]=await Promise.all([givingHistory(),pastoralAvailability()]);
+      setGiving(records);setSlots(available);
+    }catch(e){setError(safeMessage(e));}finally{setBusy(false);}
+  }
+  function mustSignIn(){Alert.alert('Member sign-in required','Open the Account section to sign in first.');setSection('Account');}
+  async function handleRegistration(event:ChurchEvent){
+    if(!userId){mustSignIn();return;}
+    await run(()=>requestEventRegistration(event.id),'Registration confirmed by the church service.');
+    setSavedRegistrations(prev=>prev.includes(event.id)?prev:[...prev,event.id]);
+  }
+  async function handleJoin(group:ChurchGroup){
+    if(!userId){mustSignIn();return;}
+    await run(()=>joinGroup(group.id),'Your fellowship membership was recorded.');
+    setSavedGroups(prev=>prev.includes(group.id)?prev:[...prev,group.id]);
+  }
+  async function handleVolunteer(opp:VolunteerOpportunity){
+    if(!userId){mustSignIn();return;}
+    await run(()=>volunteer(opp.id),'Your interest has been recorded.');
+    setSavedOpportunities(prev=>prev.includes(opp.id)?prev:[...prev,opp.id]);
+  }
+
+  return <View style={styles.wrap}>
+    <Text style={styles.title}>Church community</Text>
+    <Info>Explore public updates and connect with verified church services when available.</Info>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionNav}>
+      {sections.map(x=><Pressable accessibilityRole="tab" accessibilityState={{selected:section===x}} key={x} onPress={()=>{
+        setSection(x);setError(null);if((x==='Giving'||x==='Care')&&userId)void loadPrivate();
+      }} style={[styles.pill,section===x&&styles.selected]}><Text style={[styles.pillText,section===x&&styles.selectedText]}>{x}</Text></Pressable>)}
+    </ScrollView>
+    {!cloudEnabled && <View style={styles.notice}><Text style={styles.noticeTitle}>Offline experience</Text><Info>Member services need a church-controlled Supabase deployment. Local reading plans and existing app features remain usable.</Info></View>}
+    {error && <View style={styles.notice}><Text style={styles.danger}>{error}</Text><CTA title="Retry church data" onPress={()=>void refresh()}/></View>}
+    {busy && <ActivityIndicator size="small" color={T.blue}/>}
+    {section==='Discover' && <>
+      <Card title="Latest announcements">{data.announcements.length ? data.announcements.map((a:Announcement)=><View key={a.id} style={styles.item}><Text style={styles.itemTitle}>{a.title}</Text><Info>{a.body}</Info></View>) : <Info>No verified church announcements are available in this app yet.</Info>}</Card>
+      <Card title="Sermon library">{data.sermons.length ? data.sermons.map((s:ChurchSermon)=><View key={s.id} style={styles.item}><Text style={styles.itemTitle}>{s.title}</Text><Info>{[s.speaker,s.passage].filter(Boolean).join(' · ')}</Info>{s.description?<Info>{s.description}</Info>:null}{s.media_url&&/^https:\/\//.test(s.media_url)&&<CTA title="Open sermon" onPress={()=>void Linking.openURL(s.media_url!)}/>}</View>) : <Info>Verified church sermon feeds have not been published to the backend.</Info>}</Card>
+      <CTA title="Refresh official content" onPress={()=>void refresh()} disabled={!cloudEnabled||busy}/>
+    </>}
+    {section==='Account' && <Card title={userId?'My membership':'Sign in to your church account'}>
+      {userId ? <>
+        <Info>Signed in as {userEmail||'member'}</Info>
+        <TextInput accessibilityLabel="Display name" style={styles.input} value={name} onChangeText={setName} placeholder="Display name"/>
+        <CTA title="Save profile" onPress={()=>void updateName()} disabled={busy}/>
+        <CTA title="Sign out" onPress={()=>void run(async()=>{const {error:e}=await churchDb!.auth.signOut();if(e)throw e;},'Signed out successfully.')} disabled={busy}/>
+      </> : <>
+        <Info>Access registrations, pastoral bookings and verified giving history. A sign-in email is sent only when church authentication is configured.</Info>
+        <TextInput accessibilityLabel="Email address" autoCapitalize="none" keyboardType="email-address" style={styles.input} value={email} onChangeText={setEmail} placeholder="Email address"/>
+        <CTA title="Email me a sign-in link" onPress={()=>void signIn()} disabled={!cloudEnabled||busy}/>
+      </>}
+      <Info>Member records are isolated from Liberty-TV. Signing in does not automatically import a ChMeetings account.</Info>
+    </Card>}
+    {section==='Events' && <Card title="Upcoming events">
+      {data.events.length ? data.events.map((e:ChurchEvent)=><View key={e.id} style={styles.item}>
+        <Text style={styles.itemTitle}>{e.title}</Text><Info>{fmt(e.starts_at)}{e.venue?' · '+e.venue:''}</Info><Info>{e.description}</Info>
+        {e.registration_enabled&&<CTA title={savedRegistrations.includes(e.id)?'Registration requested':'Register for event'} onPress={()=>void handleRegistration(e)} disabled={busy||savedRegistrations.includes(e.id)}/>}
+      </View>) : <Info>No verified events are available from the church backend. For confirmed events, use the official website.</Info>}
+      <CTA title="Official church calendar" onPress={()=>void officialLink()}/>
+    </Card>}
+    {section==='Community' && <>
+      <Card title="Home fellowships">{data.groups.length ? data.groups.map((g:ChurchGroup)=><View key={g.id} style={styles.item}><Text style={styles.itemTitle}>{g.title}</Text><Info>{g.description}{g.location_label?' · '+g.location_label:''}</Info><CTA title={savedGroups.includes(g.id)?'Joined':'Join fellowship'} onPress={()=>void handleJoin(g)} disabled={busy||savedGroups.includes(g.id)}/></View>) : <Info>Fellowship listings are not yet configured.</Info>}</Card>
+      <Card title="Volunteering">{data.opportunities.length ? data.opportunities.map((o:VolunteerOpportunity)=><View key={o.id} style={styles.item}><Text style={styles.itemTitle}>{o.title}</Text><Info>{o.description}</Info><CTA title={savedOpportunities.includes(o.id)?'Interest submitted':'Register interest'} onPress={()=>void handleVolunteer(o)} disabled={busy||savedOpportunities.includes(o.id)}/></View>) : <Info>Volunteer opportunities are not yet configured.</Info>}</Card>
+    </>}
+    {section==='Care' && <>
+      <Card title="Confidential prayer request">
+        <Info>Requests are visible only to you and authorised care staff. For emergencies, contact local emergency services.</Info>
+        <TextInput accessibilityLabel="Prayer request" multiline maxLength={3000} style={[styles.input,{minHeight:110,textAlignVertical:'top'}]} placeholder="Write a private request" value={prayer} onChangeText={setPrayer}/>
+        <CTA title="Securely send request" disabled={!cloudEnabled||busy||!prayer.trim()} onPress={()=>{
+          if(!userId){mustSignIn();return;}
+          void run(async()=>{await sendPrayerRequest(prayer);setPrayer('');},'Your prayer request was received.');
+        }}/>
+      </Card>
+      <Card title="Pastoral appointments">
+        {!userId?<Info>Sign in to see verified appointment availability.</Info>:slots.length?slots.map(slot=><View style={styles.item} key={slot.id}>
+          <Info>{fmt(slot.starts_at)}</Info>
+          <CTA title="Request appointment" onPress={()=>void run(()=>requestPastoralSlot(slot.id),'Your appointment booking was recorded.')} disabled={busy}/>
+        </View>):<Info>No open pastoral slots are available from the backend.</Info>}
+        <CTA title="Refresh availability" onPress={()=>void loadPrivate()} disabled={!cloudEnabled||!userId||busy}/>
+      </Card>
+    </>}
+    {section==='Giving' && <Card title="Verified giving history">
+      {!userId?<Info>Sign in to view your own giving history.</Info>:giving.length?<>
+        {giving.map((g:GivingRecord)=><View style={styles.item} key={g.id}><Text style={styles.itemTitle}>{(g.amount_minor/100).toLocaleString('en-IE',{style:'currency',currency:g.currency})}</Text><Info>{g.fund_code} · {fmt(g.verified_at)}</Info></View>)}
+        <Info>Only server-verified payments appear here. This is not a tax certificate.</Info>
+      </>:<Info>No verified giving records are available for this account.</Info>}
+      <CTA title="Refresh verified records" onPress={()=>void loadPrivate()} disabled={!userId||busy}/>
+      <CTA title="Official giving guidance" onPress={()=>void officialLink()}/>
+      <Info>Payment transactions, recurring gifts and downloadable statements require a verified payment provider and finance approval. No payment details are collected by this interface.</Info>
+    </Card>}
+    {section==='Reading' && <>
+      {plans.map(plan=><Card key={plan.key} title={plan.title}>
+        <Info>{(reading[plan.key]??[]).length} of {plan.refs.length} days completed — progress is saved on this device{userId?' and synced when permitted':''}.</Info>
+        {plan.refs.map((ref,i)=><Pressable accessibilityRole="checkbox" accessibilityState={{checked:(reading[plan.key]??[]).includes(i+1)}} onPress={()=>void saveReading(plan.key,i+1)} key={i} style={styles.checkRow}>
+          <Text style={styles.check}>{(reading[plan.key]??[]).includes(i+1)?'☑':'☐'}</Text><Text style={styles.checkLabel}>Day {i+1}: {ref}</Text>
+        </Pressable>)}
+      </Card>)}
+      <CTA title="Read more through the church" onPress={()=>void officialLink()}/>
+    </>}
+  </View>;
+}
+const styles=StyleSheet.create({
+  wrap:{gap:14,paddingBottom:24},
+  title:{fontSize:29,fontWeight:'800',color:T.ink,letterSpacing:-0.8},
+  sectionNav:{gap:7,paddingVertical:7},
+  pill:{paddingHorizontal:13,paddingVertical:10,borderRadius:18,backgroundColor:T.pale},
+  selected:{backgroundColor:T.brand},
+  pillText:{fontWeight:'700',fontSize:12,color:T.brand},
+  selectedText:{color:T.white},
+  card:{borderWidth:1,borderColor:T.border,borderRadius:18,padding:16,gap:10,backgroundColor:T.white},
+  cardTitle:{fontSize:19,fontWeight:'800',color:T.ink},
+  body:{color:T.muted,fontSize:13,lineHeight:21},
+  item:{gap:7,borderTopColor:T.border,borderTopWidth:1,paddingTop:12,paddingBottom:6},
+  itemTitle:{fontSize:15,fontWeight:'700',color:T.ink},
+  cta:{backgroundColor:T.brand,padding:13,borderRadius:12,marginTop:4,alignItems:'center'},
+  ctaText:{color:T.white,fontSize:13,fontWeight:'700'},
+  disabled:{opacity:0.45},
+  input:{backgroundColor:T.background,borderColor:T.border,borderWidth:1,borderRadius:12,color:T.ink,fontSize:14,padding:13},
+  notice:{backgroundColor:T.pale,padding:14,borderRadius:14,gap:6},
+  noticeTitle:{color:T.ink,fontWeight:'800'},
+  danger:{color:'#9E3333',fontWeight:'600'},
+  checkRow:{flexDirection:'row',gap:12,alignItems:'center',paddingVertical:10},
+  check:{fontSize:20,color:T.blue},
+  checkLabel:{color:T.ink,fontSize:13,flex:1},
+});
