@@ -14,7 +14,7 @@ import MemberHub from './src/MemberHub';
 import { cloudEnabled, getPublicContent } from './src/backend';
 
 type Tab = 'Home' | 'Watch' | 'Events' | 'Give' | 'More';
-type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'My interests' | 'Church hub' | null;
+type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'Privacy' | 'My interests' | 'Church hub' | null;
 const tabs: { name: Tab; icon: string }[] = [
   { name: 'Home', icon: '⌂' }, { name: 'Watch', icon: '▶' },
   { name: 'Events', icon: '▦' }, { name: 'Give', icon: '♡' }, { name: 'More', icon: '☰' },
@@ -164,6 +164,7 @@ function AppContent() {
       { title: 'Church hub', desc: 'Membership, events, groups, pastoral care and reading plans', target: 'Church hub' },
       { title: 'My saved items', desc: 'Local event interests and study bookmarks', target: 'My interests' },
       { title: 'About Solid Rock', desc: 'Find our church and plan a visit', target: 'About' },
+      { title: 'Privacy and your data', desc: 'How this preview handles information', target: 'Privacy' },
       { title: 'Official website', desc: 'Latest information and announcements', external: true },
     ];
     return <><Text style={s.pageTitle}>More to explore</Text><Text style={s.pageIntro}>Faith, community and helpful resources.</Text>
@@ -187,6 +188,10 @@ function AppContent() {
       {page === 'Groups' && <><Text style={s.pageIntro}>Find a place to grow, serve and build meaningful relationships.</Text>
         <Surface><Text style={s.cardTitle}>Life together</Text><Text style={s.body}>Connect with ministries, fellowship gatherings and outreach initiatives. For current group availability and volunteer opportunities, contact the church.</Text><PrimaryButton label="Explore community  ↗" onPress={openOfficialSite}/></Surface></>}
       {page === 'About' && <><Text style={s.pageIntro}>A welcoming community of faith in Dublin.</Text><Surface><Text style={s.cardTitle}>{CHURCH_NAME}</Text><Text style={s.body}>Visit the church's website for current directions, service times, ministries and contact information.</Text><PrimaryButton label="Visit solidrockdublin.org  ↗" onPress={openOfficialSite}/></Surface></>}
+      {page === 'Privacy' && <><Text style={s.pageIntro}>Your information should be treated with care.</Text>
+        <Surface><Text style={s.cardTitle}>What this preview stores</Text><Text style={s.body}>Saved interests, bookmarks, reading progress and your theme preference may be stored on your device. No payment data is collected in this preview.</Text><Text style={s.body}>Account details, registration, prayer requests and care records require an explicitly configured Solid Rock database. The current public preview is not connected to one.</Text></Surface>
+        <Surface><Text style={s.cardTitle}>Your choices and support</Text><Text style={s.body}>A church-approved privacy notice, deletion workflow and data retention schedule are required before inviting real members to share personal data.</Text><PrimaryButton label="Contact Solid Rock  ↗" onPress={()=>{void Linking.openURL('mailto:admin@solidrockdublin.org');}}/></Surface>
+      </>}
       {page === 'My interests' && <><Text style={s.pageIntro}>Saved locally on this device, not connected to a church account.</Text>
         <SectionHeading title="Gatherings"/>{preferences.interests.length ? sampleEvents.filter(x => preferences.interests.includes(x.id)).map(x => <Surface key={x.id}><Text style={s.cardTitle}>{x.title}</Text><Pressable onPress={() => toggleInterest(x.id)}><Text style={s.action}>Remove from saved</Text></Pressable></Surface>) : <Text style={s.body}>No gatherings saved yet.</Text>}
         <SectionHeading title="Reading guides"/>{preferences.bookmarks.length ? sampleMessages.filter(x => preferences.bookmarks.includes(x.id)).map(x => <Surface key={x.id}><Text style={s.cardTitle}>{x.title}</Text><Pressable onPress={() => toggleBookmark(x.id)}><Text style={s.action}>Remove bookmark</Text></Pressable></Surface>) : <Text style={s.body}>No reading guides bookmarked yet.</Text>}</>}
