@@ -5,7 +5,6 @@ import {theme as T} from './theme';
 import {CONTACT_ADDRESS,SUNDAY_SERVICE,VISIT_URL} from './content';
 import type {Announcement,ChurchEvent} from './backend';
 import type {MediaFeed,ChannelVideo} from './mediaFeed';
-import {YOUTUBE_CHANNEL} from './mediaFeed';
 
 // Deliberately follows the church team's approved prototype hierarchy:
 // important notice -> real livestream -> quick actions -> announcements ->
@@ -38,9 +37,10 @@ function Section({title,action,onAction}:{title:string;action?:string;onAction?:
 function Opening({title,caption,onPress}:{title:string;caption:string;onPress:()=>void}){
  const s=styles();
  return <Pressable accessibilityRole="button" accessibilityLabel={title} style={s.messageLink} onPress={onPress}>
-  <Text style={s.messageTitle}>{title}</Text>
-  <Text style={s.messageCaption} numberOfLines={2}>{caption}</Text>
-  <AppIcon name="chevron" size={18} color={T.green}/>
+  <View style={{flex:1,gap:3}}>
+   <Text style={s.messageTitle} numberOfLines={2}>{title}</Text>
+   <Text style={s.messageCaption} numberOfLines={2}>{caption}</Text>
+  </View><AppIcon name="chevron" size={18} color={T.green}/>
  </Pressable>;
 }
 export default function ChurchHome({media,announcements,events,onGive,onWatch,onEvents,onBible,onUpdates,onCommunity,onTalk,onPlayVideo}:Props){
@@ -174,8 +174,8 @@ function styles(){return StyleSheet.create({
  quickLabel:{fontFamily:'Mulish_700Bold',fontSize:12,color:T.ink},
  messageLink:{minHeight:70,paddingHorizontal:15,paddingVertical:12,borderWidth:1,borderColor:T.border,borderRadius:15,
   backgroundColor:T.white,flexDirection:'row',alignItems:'center',gap:12},
- messageTitle:{fontFamily:'Mulish_700Bold',fontSize:14,color:T.ink,flex:1},
- messageCaption:{fontFamily:'Mulish_400Regular',fontSize:12,lineHeight:18,color:T.muted,flex:1.4},
+ messageTitle:{fontFamily:'Mulish_700Bold',fontSize:14,color:T.ink},
+ messageCaption:{fontFamily:'Mulish_400Regular',fontSize:12,lineHeight:18,color:T.muted},
  listCard:{borderRadius:16,padding:16,gap:8,backgroundColor:T.white,borderWidth:1,borderColor:T.border},
  cardTitle:{fontFamily:'Poppins_700Bold',fontSize:16,color:T.ink,lineHeight:23},
  mediaCard:{overflow:'hidden',borderRadius:16,backgroundColor:T.white,borderWidth:1,borderColor:T.border},
