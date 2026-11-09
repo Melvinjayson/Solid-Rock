@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import AppIcon, {type IconName} from './src/AppIcon';
 import Onboarding from './src/Onboarding';
 import CommunityScreen from './src/CommunityScreen';
+import ChurchHome from './src/ChurchHome';
 import GivingScreen from './src/GivingScreen';
 import BibleReader from './src/BibleReader';
 import JourneyScreen from './src/JourneyScreen';
@@ -28,11 +29,11 @@ import YouTubePlayer from './src/YouTubePlayer';
 import { loadMediaFeed, YOUTUBE_CHANNEL, YOUTUBE_LIVE, INSTAGRAM_CHANNEL, OFFICIAL_PLAYLISTS, type MediaFeed } from './src/mediaFeed';
 import { cloudEnabled, getPublicContent } from './src/backend';
 
-type Tab = 'Home' | 'Watch' | 'Community' | 'Events' | 'More';
-type Page = 'Bible' | 'Prayer' | 'Groups' | 'About' | 'Privacy' | 'Giving' | 'My interests' | 'Church hub' | 'Social' | 'Talk to us' | 'Preferences' | 'Notifications' | 'Journey' | null;
+type Tab = 'Home' | 'Watch' | 'Events' | 'Give' | 'More';
+type Page = 'Community' | 'Bible' | 'Prayer' | 'Groups' | 'About' | 'Privacy' | 'Giving' | 'My interests' | 'Church hub' | 'Social' | 'Talk to us' | 'Preferences' | 'Notifications' | 'Journey' | null;
 const tabs: { name: Tab; icon:IconName }[] = [
   {name:'Home',icon:'home'},{name:'Watch',icon:'watch'},
-  {name:'Community',icon:'community'},{name:'Events',icon:'events'},
+  {name:'Events',icon:'events'},{name:'Give',icon:'give'},
   {name:'More',icon:'more'}
 ];
 const WELCOME_KEY='@solidrock:welcome:v1';
@@ -87,7 +88,7 @@ function AppContent() {
   useEffect(()=>{let mounted=true;AsyncStorage.getItem('@solidrock:theme').then(v=>{if(mounted&&(v==='light'||v==='dark'))setMode(v);}).catch(()=>{});return()=>{mounted=false;};},[]);
   function toggleMode(){const next=mode==='dark'?'light':'dark';setMode(next);void AsyncStorage.setItem('@solidrock:theme',next).catch(()=>{});}
   useEffect(()=>{let alive=true;AsyncStorage.getItem(WELCOME_KEY).then(x=>{if(alive)setOnboarding(x==='done'?'done':'show');}).catch(()=>{if(alive)setOnboarding('show');});return()=>{alive=false;};},[]);
-  function finishOnboarding(interest:'faith'|'community'|'media'|'events'|null){setOnboarding('done');void AsyncStorage.setItem(WELCOME_KEY,'done').catch(()=>{});setTab(interest==='community'?'Community':interest==='media'?'Watch':interest==='events'?'Events':'Home');}
+  function finishOnboarding(interest:'faith'|'community'|'media'|'events'|null){setOnboarding('done');void AsyncStorage.setItem(WELCOME_KEY,'done').catch(()=>{});setTab(interest==='community'?'More':interest==='media'?'Watch':interest==='events'?'Events':'Home');setPage(interest==='community'?'Community':null);}
   const [tab, setTab] = useState<Tab>('Home');
   const [page, setPage] = useState<Page>(null);
   const [preferences, setPreferences] = useState<Preferences>(EMPTY);
@@ -136,47 +137,19 @@ function AppContent() {
   const contentWidth = Math.min(width - 36, 620);
 
   function Home() {
-    return <>
-      <ImageBackground accessibilityLabel="Solid Rock congregation gathering for worship" source={{uri:churchAssets.worship}} style={{borderRadius:25,overflow:'hidden'}} imageStyle={{borderRadius:25}} resizeMode="cover"><View style={s.hero}><Tag>YOU BELONG HERE</Tag>
-        <Text style={[s.heroTitle,{color:'#FFFFFF'}]}>Faith beyond{ '\n' }Sunday.</Text>
-        <Text style={[s.heroCopy,{color:'#F2EBDD'}]}>A space to belong, reflect, pray and stay connected with your church family.</Text>
-        <Text style={{fontFamily:'Mulish_700Bold',fontSize:13,color:'#F5E3B3'}}>{SUNDAY_SERVICE} · Inchicore, Dublin 8</Text>
-        <PrimaryButton label="Plan your visit  ↗" onPress={()=>{void Linking.openURL(VISIT_URL);}}/>
-      </View></ImageBackground>
-      <View style={s.quickRow}>
-        <Pressable style={s.quick} onPress={() => goTab('Watch')} accessibilityRole="button"><AppIcon name="watch" size={25} color={T.gold}/><Text style={s.quickTitle}>Watch</Text><Text style={s.quickMeta}>Worship & study</Text></Pressable>
-        <Pressable style={s.quick} onPress={() => goTab('Community')} accessibilityRole="button"><AppIcon name="community" size={25} color={T.gold}/><Text style={s.quickTitle}>Community</Text><Text style={s.quickMeta}>Pray & connect</Text></Pressable>
-        <Pressable style={s.quick} onPress={() => goPage('Prayer')} accessibilityRole="button"><AppIcon name="prayer" size={25} color={T.gold}/><Text style={s.quickTitle}>Prayer</Text><Text style={s.quickMeta}>Find support</Text></Pressable>
-      </View>
-      {remote?.announcements?.length ? <><SectionHeading title="Church announcements"/>{remote.announcements.slice(0,2).map(a=><Surface key={a.id}><Text style={s.cardTitle}>{a.title}</Text><Text style={s.body}>{a.body}</Text></Surface>)}</> : null}
-      <SectionHeading title="This week" action="All events" onAction={() => goTab('Events')}/>
-      <Surface><Tag>WEEKLY WORSHIP</Tag><Text style={s.cardTitle}>{SUNDAY_SERVICE}</Text><Text style={s.body}>{CONTACT_ADDRESS}</Text><PrimaryButton label="Plan a visit  ↗" outline onPress={()=>{void Linking.openURL(VISIT_URL);}}/></Surface>
-      <SectionHeading title="Grow at your own pace" action="My journey" onAction={()=>goPage('Journey')}/>
-      <Surface><Tag>THIS WEEK'S SMALL STEP</Tag><Text style={s.cardTitle}>Seven days. Your pace.</Text>
-        <Text style={s.body}>Explore Scripture, kindness and everyday faith through simple reflections you can save privately.</Text>
-        <PrimaryButton label="Start a personal faith journey" onPress={()=>goPage('Journey')}/>
-      </Surface>
-      <SectionHeading title="Find your place" action="Explore ministries" onAction={()=>goPage('Groups')}/>
-      <Surface><Text style={s.cardTitle}>From first visit to feeling at home</Text>
-        <Text style={s.body}>Meet people across backgrounds and generations, grow in Scripture and discover ways to serve.</Text>
-        <PrimaryButton label="Discover community spaces" onPress={()=>goTab('Community')}/>
-        <PrimaryButton label="Talk to us" outline onPress={()=>goPage('Talk to us')}/>
-      </Surface>
-      <SectionHeading title="From our community" action="Instagram" onAction={()=>{void Linking.openURL(INSTAGRAM_CHANNEL);}}/>
-      {media?.instagram?.length ? media.instagram.slice(0,3).map(p=><Surface key={p.id}>
-        {p.thumbnail&&<Image source={{uri:p.thumbnail}} accessibilityLabel="Solid Rock Centre Instagram post" resizeMode="cover" style={{height:180,width:'100%',borderRadius:12}}/>}
-        <Tag>{p.type==='REELS'?'REEL':'INSTAGRAM'}</Tag>
-        <Text style={s.body} numberOfLines={4}>{p.caption||'Latest update from Solid Rock Centre'}</Text>
-        <PrimaryButton outline label="View original post  ↗" onPress={()=>{void Linking.openURL(p.permalink);}}/>
-      </Surface>) : <Surface><Text style={s.cardTitle}>Follow Solid Rock Centre</Text>
-        <Text style={s.body}>See official posts, reels and community photos on Instagram. A church-authorised feed will appear here when connected.</Text>
-        <PrimaryButton label="Open Instagram  ↗" outline onPress={()=>{void Linking.openURL(INSTAGRAM_CHANNEL);}}/></Surface>}
-      {media?.news?.length? <><SectionHeading title="From the church website"/>{media.news.slice(0,3).map(n=>
-        <Surface key={n.id}><Text style={s.cardTitle}>{n.title}</Text><Text style={s.body}>{n.summary}</Text><PrimaryButton label="Read church update  ↗" outline onPress={()=>{void Linking.openURL(n.url);}}/></Surface>
-      )}</>:null}
-      <SectionHeading title="Grow in the Word" action="Explore" onAction={() => goTab('Watch')}/>
-      <Surface><Text style={s.kicker}>REFLECTION</Text><Text style={s.cardTitle}>Rooted in faith</Text><Text style={s.body}>A short reading guide to help you reflect during the week.</Text><Pressable onPress={() => goPage('Bible')} accessibilityRole="button"><Text style={s.action}>Open Bible resources →</Text></Pressable></Surface>
-    </>;
+    return <ChurchHome
+      media={media}
+      announcements={remote?.announcements||[]}
+      events={remote?.events||[]}
+      onGive={()=>goTab('Give')}
+      onWatch={()=>goTab('Watch')}
+      onEvents={()=>goTab('Events')}
+      onBible={()=>goPage('Bible')}
+      onUpdates={()=>goPage('Notifications')}
+      onCommunity={()=>goPage('Community')}
+      onTalk={()=>goPage('Talk to us')}
+      onPlayVideo={id=>{chooseVideo(id);goTab('Watch');}}
+    />;
   }
 
   function Watch() {
@@ -271,49 +244,67 @@ function AppContent() {
   }
 
   function More() {
-    const links: { title: string; desc: string; target?: Page; external?: boolean }[] = [
-      { title: 'Bible & reading', desc: 'Read, highlight and discuss the World English Bible', target: 'Bible' },
-      { title: 'Your faith journey', desc: 'Small reflections for every age and stage', target: 'Journey' },
-      { title: 'Talk to us', desc: 'Questions, pastoral contact, inclusion and support', target: 'Talk to us' },
-      { title: 'Updates', desc: 'Church messages and news in one place', target: 'Notifications' },
-      { title: 'Preferences', desc: 'Black mode, reading comfort and reminders', target: 'Preferences' },
-      { title: 'Prayer & fasting devotionals', desc: 'Read published 2026 church devotionals', external: true },
-      { title: 'Prayer & care', desc: 'Private pastoral contact information', target: 'Prayer' },
-      { title: 'Fellowships & ministries', desc: 'Connect and discover ways to serve', target: 'Groups' },
-      { title: 'Welcome guide', desc: 'Explore what the app can do', target: null },
-      { title: 'Church hub', desc: 'Membership, events, groups, pastoral care and reading plans', target: 'Church hub' },
-      { title: 'Giving', desc: 'Support the church through verified giving information', target: 'Giving' },
-      { title: 'Social channels', desc: 'Facebook, TikTok, Instagram, X and podcasts', target: 'Social' },
-      { title: 'My saved items', desc: 'Local event interests and study bookmarks', target: 'My interests' },
-      { title: 'About Solid Rock', desc: 'Find our church and plan a visit', target: 'About' },
-      { title: 'Privacy and your data', desc: 'How this preview handles information', target: 'Privacy' },
-      { title: 'Official website', desc: 'Latest information and announcements', external: true },
+    // Church prototype: useful services grouped by purpose, not one social feed.
+    const groups: {title:string;links:{title:string;desc:string;target?:Page;url?:string;welcome?:boolean}[]}[]=[
+      {title:'Grow',links:[
+        {title:'Bible & reading',desc:'Read, highlight and reflect on Scripture',target:'Bible'},
+        {title:'Your faith journey',desc:'Personal readings and reflections',target:'Journey'},
+        {title:'Prayer & fasting devotionals',desc:'Published church devotional resources',url:'https://solidrockdublin.org/devotional/day-2-repentance-and-surrender'},
+      ]},
+      {title:'Community',links:[
+        {title:'Community conversations',desc:'Church channels, prayer and shared discussion',target:'Community'},
+        {title:'Fellowships & ministries',desc:'Find a group and discover ways to serve',target:'Groups'},
+        {title:'Prayer & care',desc:'Ask for prayer or pastoral support',target:'Prayer'},
+        {title:'Talk to us',desc:'Visiting, youth, access needs and specific requests',target:'Talk to us'},
+        {title:'Church hub',desc:'Member services when church accounts are enabled',target:'Church hub'},
+      ]},
+      {title:'My space',links:[
+        {title:'My saved items',desc:'Bookmarked readings and saved interests',target:'My interests'},
+        {title:'Updates',desc:'Church messages and announcements',target:'Notifications'},
+        {title:'Preferences',desc:'Dark or light mode, reading and reminders',target:'Preferences'},
+        {title:'Privacy and your data',desc:'Control information saved on this device',target:'Privacy'},
+        {title:'Welcome guide',desc:'Replay your introduction to the app',welcome:true},
+      ]},
+      {title:'About & connect',links:[
+        {title:'Social channels',desc:'Official Facebook, TikTok, Instagram, X and podcasts',target:'Social'},
+        {title:'About Solid Rock',desc:'Church information, directions and contact',target:'About'},
+        {title:'Official website',desc:'Church website and information',url:CHURCH_URL},
+      ]},
     ];
-    return <><Text style={s.pageTitle}>Your space</Text><Text style={s.pageIntro}>Preferences, useful resources and your connection to Solid Rock.</Text>
-      {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.title==='Welcome guide'?setOnboarding('show'):l.external ? void Linking.openURL(l.title==='Prayer & fasting devotionals'?'https://solidrockdublin.org/devotional/day-2-repentance-and-surrender':l.title==='Official YouTube'?YOUTUBE_CHANNEL:l.title==='Official Instagram'?INSTAGRAM_CHANNEL:CHURCH_URL) : goPage(l.target ?? null)}>
-        <View style={{ flex: 1 }}><Text style={s.menuTitle}>{l.title}</Text><Text style={s.menuDesc}>{l.desc}</Text></View><AppIcon name="chevron" size={18} color={T.muted}/>
-      </Pressable>)}
-      <Text style={s.disclaimer}>Member accounts, financial statements and pastoral bookings require approved integrations and are not enabled in this MVP.</Text>
+    return <><Text style={s.pageTitle}>Your space</Text>
+      <Text style={s.pageIntro}>Church life, resources and the things that matter to you.</Text>
+      {groups.map(group=><View key={group.title} style={{gap:9}}>
+        <SectionHeading title={group.title}/>
+        {group.links.map(l=><Pressable accessibilityRole="button" key={l.title}
+          accessibilityLabel={l.title} style={s.menuRow}
+          onPress={()=>l.welcome?setOnboarding('show'):l.url?void Linking.openURL(l.url):goPage(l.target??null)}>
+          <View style={{flex:1}}><Text style={s.menuTitle}>{l.title}</Text>
+            <Text style={s.menuDesc}>{l.desc}</Text></View>
+          <AppIcon name="chevron" size={18} color={T.muted}/>
+        </Pressable>)}
+      </View>)}
+      <Text style={s.disclaimer}>Membership, statements and pastoral bookings remain unavailable until approved church services are connected.</Text>
     </>;
   }
 
   function Detail() {
     return <><Pressable accessibilityRole="button" onPress={() => goPage(null)} style={{ marginBottom: 22 }}><Text style={s.action}>← Back</Text></Pressable>
-      {page==='Church hub'?<MemberHub/>:!(['Bible','Giving','Social','Talk to us','Preferences','Notifications','Journey'] as Page[]).includes(page)&&<Text style={s.pageTitle}>{page}</Text>}
+      {page==='Church hub'?<MemberHub/>:!(['Community','Bible','Giving','Social','Talk to us','Preferences','Notifications','Journey'] as Page[]).includes(page)&&<Text style={s.pageTitle}>{page}</Text>}
+      {page === 'Community' && <CommunityScreen studyShare={studyShare} onAccount={()=>goPage('Church hub')} onVisit={()=>goPage('Talk to us')}/>}
       {page === 'Giving' && <GivingScreen/>}
       {page === 'Talk to us' && <TalkToUsScreen/>}
       {page === 'Notifications' && <NotificationsScreen feed={media} announcements={remote?.announcements||[]} prefs={appPrefs} onWatch={()=>goTab('Watch')}/>}
       {page === 'Preferences' && <PreferencesScreen mode={mode} setMode={v=>{setMode(v);void AsyncStorage.setItem('@solidrock:theme',v);}} prefs={appPrefs} setPrefs={setAppPrefs} onAccount={()=>goPage('Church hub')}/>} 
       {page === 'Social' && <SocialConnectScreen feed={media} busy={mediaBusy} onRefresh={()=>{void refreshMedia();}} onWatch={()=>goTab('Watch')}/>}
-      {page === 'Bible' && <BibleReader fontScale={appPrefs.fontScale} onShare={reference=>{setStudyShare(reference);goTab('Community');}}/>}
-      {page === 'Journey' && <JourneyScreen onBible={()=>goPage('Bible')} onCommunity={()=>goTab('Community')}/>}
+      {page === 'Bible' && <BibleReader fontScale={appPrefs.fontScale} onShare={reference=>{setStudyShare(reference);goPage('Community');}}/>}
+      {page === 'Journey' && <JourneyScreen onBible={()=>goPage('Bible')} onCommunity={()=>goPage('Community')}/>}
       {page === 'Prayer' && <><Text style={s.pageIntro}>You are not alone. Connect with the church for prayer and pastoral care.</Text>
         <Surface><Text style={s.cardTitle}>Prepare a prayer request</Text><Text style={s.body}>You may draft a short personal note below. It stays in this screen and is not submitted, saved or shared.</Text>
           <TextInput multiline value={prayer} onChangeText={setPrayer} placeholder="Write a private draft (optional)" placeholderTextColor={T.muted} style={[s.input, { height: 120, textAlignVertical: 'top' }]} accessibilityLabel="Draft prayer request"/>
           <PrimaryButton label="Talk privately to the church" onPress={()=>goPage('Talk to us')}/><Text style={s.disclaimer}>Do not enter urgent or highly sensitive information here. For immediate danger, contact local emergency services.</Text></Surface></>}
       {page === 'Groups' && <><Text style={s.pageIntro}>Find a place to learn, serve and meet people across cultures and generations.</Text>
         {MINISTRIES.map(m=><Surface key={m.name}><MinistryImage asset={m.image} name={m.name}/><Text style={s.cardTitle}>{m.name}</Text><Text style={s.body}>{m.detail}</Text><PrimaryButton label="Ask about this ministry" onPress={()=>goPage('Talk to us')}/></Surface>)}
-        <PrimaryButton label="Explore conversations" onPress={()=>goTab('Community')}/></>}
+        <PrimaryButton label="Explore conversations" onPress={()=>goPage('Community')}/></>}
       {page === 'About' && <><Text style={s.pageIntro}>Loving God, loving others and serving the world.</Text>
         <Surface><Tag>PLAN YOUR VISIT</Tag><Text style={s.cardTitle}>{CHURCH_NAME}</Text><Text style={s.body}>{SUNDAY_SERVICE}</Text><Text style={s.body}>{CONTACT_ADDRESS}</Text>
           <PrimaryButton label="Plan your visit  ↗" onPress={()=>{void Linking.openURL(VISIT_URL);}}/>
@@ -356,8 +347,7 @@ function AppContent() {
         <ScrollView ref={scrollRef} key={page ?? tab} keyboardShouldPersistTaps="handled"
           contentContainerStyle={[s.scrollContent,{width:contentWidth,alignSelf:'center'}]}>
           {page?Detail():tab==='Home'?Home():tab==='Watch'?Watch():
-            tab==='Community'?<CommunityScreen studyShare={studyShare} onAccount={()=>goPage('Church hub')} onVisit={()=>goPage('Talk to us')}/>:
-            tab==='Events'?Events():More()}
+            tab==='Events'?Events():tab==='Give'?<GivingScreen/>:More()}
         </ScrollView>
         <View style={s.tabBar}>{tabs.map(t=>{
           const active=tab===t.name&&!page;
