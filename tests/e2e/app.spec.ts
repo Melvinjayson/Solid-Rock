@@ -236,8 +236,8 @@ test('privacy erase removes Bible notes, faith progress, theme and reopens welco
 });
 
 test('church team home priority: service, giving, livestream, announcements and no social feed',async ({page})=>{
- const labels=await page.getByRole('tab').allTextContents();
- expect(labels.map(x=>x.trim())).toEqual(['Home','Watch','Events','Give','More']);
+ const labels=await page.getByRole('tab').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('aria-label')));
+ expect(labels).toEqual(['Home','Watch','Events','Give','More']);
  await expect(page.getByText('Welcome to Solid Rock',{exact:true})).toBeVisible();
  await expect(page.getByText('Recent announcements')).toBeVisible();
  await expect(page.getByText('Latest message')).toBeVisible();
