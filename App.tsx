@@ -244,29 +244,46 @@ function AppContent() {
   }
 
   function More() {
-    const links: { title: string; desc: string; target?: Page; external?: boolean }[] = [
-      { title: 'Bible & reading', desc: 'Read, highlight and discuss the World English Bible', target: 'Bible' },
-      { title: 'Your faith journey', desc: 'Small reflections for every age and stage', target: 'Journey' },
-      { title: 'Talk to us', desc: 'Questions, pastoral contact, inclusion and support', target: 'Talk to us' },
-      { title: 'Updates', desc: 'Church messages and news in one place', target: 'Notifications' },
-      { title: 'Preferences', desc: 'Black mode, reading comfort and reminders', target: 'Preferences' },
-      { title: 'Prayer & fasting devotionals', desc: 'Read published 2026 church devotionals', external: true },
-      { title: 'Prayer & care', desc: 'Private pastoral contact information', target: 'Prayer' },
-      { title: 'Fellowships & ministries', desc: 'Connect and discover ways to serve', target: 'Groups' },
-      { title: 'Welcome guide', desc: 'Explore what the app can do', target: null },
-      { title: 'Church hub', desc: 'Membership, events, groups, pastoral care and reading plans', target: 'Church hub' },
-      { title: 'Giving', desc: 'Support the church through verified giving information', target: 'Giving' },
-      { title: 'Social channels', desc: 'Facebook, TikTok, Instagram, X and podcasts', target: 'Social' },
-      { title: 'My saved items', desc: 'Local event interests and study bookmarks', target: 'My interests' },
-      { title: 'About Solid Rock', desc: 'Find our church and plan a visit', target: 'About' },
-      { title: 'Privacy and your data', desc: 'How this preview handles information', target: 'Privacy' },
-      { title: 'Official website', desc: 'Latest information and announcements', external: true },
+    // Church prototype: useful services grouped by purpose, not one social feed.
+    const groups: {title:string;links:{title:string;desc:string;target?:Page;url?:string;welcome?:boolean}[]}[]=[
+      {title:'Grow',links:[
+        {title:'Bible & reading',desc:'Read, highlight and reflect on Scripture',target:'Bible'},
+        {title:'Your faith journey',desc:'Personal readings and reflections',target:'Journey'},
+        {title:'Prayer & fasting devotionals',desc:'Published church devotional resources',url:'https://solidrockdublin.org/devotional/day-2-repentance-and-surrender'},
+      ]},
+      {title:'Community',links:[
+        {title:'Community conversations',desc:'Church channels, prayer and shared discussion',target:'Community'},
+        {title:'Fellowships & ministries',desc:'Find a group and discover ways to serve',target:'Groups'},
+        {title:'Prayer & care',desc:'Ask for prayer or pastoral support',target:'Prayer'},
+        {title:'Talk to us',desc:'Visiting, youth, access needs and specific requests',target:'Talk to us'},
+        {title:'Church hub',desc:'Member services when church accounts are enabled',target:'Church hub'},
+      ]},
+      {title:'My space',links:[
+        {title:'My saved items',desc:'Bookmarked readings and saved interests',target:'My interests'},
+        {title:'Updates',desc:'Church messages and announcements',target:'Notifications'},
+        {title:'Preferences',desc:'Dark or light mode, reading and reminders',target:'Preferences'},
+        {title:'Privacy and your data',desc:'Control information saved on this device',target:'Privacy'},
+        {title:'Welcome guide',desc:'Replay your introduction to the app',welcome:true},
+      ]},
+      {title:'About & connect',links:[
+        {title:'Social channels',desc:'Official Facebook, TikTok, Instagram, X and podcasts',target:'Social'},
+        {title:'About Solid Rock',desc:'Church information, directions and contact',target:'About'},
+        {title:'Official website',desc:'Church website and information',url:CHURCH_URL},
+      ]},
     ];
-    return <><Text style={s.pageTitle}>Your space</Text><Text style={s.pageIntro}>Preferences, useful resources and your connection to Solid Rock.</Text>
-      {links.map(l => <Pressable accessibilityRole="button" key={l.title} style={s.menuRow} onPress={() => l.title==='Welcome guide'?setOnboarding('show'):l.external ? void Linking.openURL(l.title==='Prayer & fasting devotionals'?'https://solidrockdublin.org/devotional/day-2-repentance-and-surrender':l.title==='Official YouTube'?YOUTUBE_CHANNEL:l.title==='Official Instagram'?INSTAGRAM_CHANNEL:CHURCH_URL) : goPage(l.target ?? null)}>
-        <View style={{ flex: 1 }}><Text style={s.menuTitle}>{l.title}</Text><Text style={s.menuDesc}>{l.desc}</Text></View><AppIcon name="chevron" size={18} color={T.muted}/>
-      </Pressable>)}
-      <Text style={s.disclaimer}>Member accounts, financial statements and pastoral bookings require approved integrations and are not enabled in this MVP.</Text>
+    return <><Text style={s.pageTitle}>Your space</Text>
+      <Text style={s.pageIntro}>Church life, resources and the things that matter to you.</Text>
+      {groups.map(group=><View key={group.title} style={{gap:9}}>
+        <SectionHeading title={group.title}/>
+        {group.links.map(l=><Pressable accessibilityRole="button" key={l.title}
+          accessibilityLabel={l.title} style={s.menuRow}
+          onPress={()=>l.welcome?setOnboarding('show'):l.url?void Linking.openURL(l.url):goPage(l.target??null)}>
+          <View style={{flex:1}}><Text style={s.menuTitle}>{l.title}</Text>
+            <Text style={s.menuDesc}>{l.desc}</Text></View>
+          <AppIcon name="chevron" size={18} color={T.muted}/>
+        </Pressable>)}
+      </View>)}
+      <Text style={s.disclaimer}>Membership, statements and pastoral bookings remain unavailable until approved church services are connected.</Text>
     </>;
   }
 
