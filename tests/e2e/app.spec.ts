@@ -25,7 +25,7 @@ test('official content, dark default and persistent theme toggle', async ({page}
 test('five core tabs are visible and navigable', async ({page},testInfo) => {
   mkdirSync(folder,{recursive:true});
   for(const [tab,heading] of [
-    ['Watch','Watch & grow'],['Community','Together is better.'],['Events','Gather together'],['More','Your space'],
+    ['Watch','Watch & grow'],['Events','Gather together'],['Give','Generosity, made simple.'],['More','Your space'],
   ] as const){
     await page.getByRole('tab',{name:tab,exact:true}).click();
     await expect(page.getByText(heading)).toBeVisible();
@@ -83,12 +83,15 @@ test('church YouTube player, playlist and Instagram fallback',async ({page})=>{
   await page.getByRole('button',{name:'▶ Play playlist in app'}).first().click();
   await expect(page.getByTitle('Solid Rock Centre official YouTube player')).toBeVisible();
   await page.getByRole('tab',{name:'Home',exact:true}).click();
-  await expect(page.getByText('From our community')).toBeVisible();
-  await expect(page.getByText('Follow Solid Rock Centre')).toBeVisible();
+  await expect(page.getByText('Recent announcements')).toBeVisible();
+  await expect(page.getByText('From our community')).toHaveCount(0);
+  await page.getByRole('tab',{name:'More',exact:true}).click();
+  await page.getByRole('button',{name:'Social channels'}).click();
+  await expect(page.getByRole('button',{name:'Open Instagram'})).toBeVisible();
 });
 test('ministry photography is in Discover ministries, not duplicated on the app home',async ({page})=>{
-  await expect(page.getByText('Find your place')).toBeVisible();
-  await page.getByRole('button',{name:/Explore ministries/}).click();
+  await page.getByRole('tab',{name:'More',exact:true}).click();
+  await page.getByRole('button',{name:'Fellowships & ministries'}).click();
   await expect(page.getByText('Food Bank')).toBeVisible();
   await expect(page.getByText('Youth Sunday School')).toBeVisible();
   await expect(page.getByText('Spirituality')).toBeVisible();
@@ -110,7 +113,8 @@ test('first-run onboarding introduces guest-first community and remembers comple
  await expect(page.getByRole('tab',{name:'Home'})).toBeVisible();
 });
 test('community guest can inspect five channel topics without seeing fabricated posts',async ({page},testInfo)=>{
- await page.getByRole('tab',{name:'Community',exact:true}).click();
+ await page.getByRole('tab',{name:'More',exact:true}).click();
+ await page.getByRole('button',{name:'Community conversations'}).click();
  await expect(page.getByText('Together is better.')).toBeVisible();
  for(const heading of ['Church updates','Prayer circle','Faith & life','Scripture together','Serve together'])
    await expect(page.getByText(heading)).toBeVisible();
@@ -123,15 +127,13 @@ test('community guest can inspect five channel topics without seeing fabricated 
  await page.getByRole('button',{name:'Back to community channels'}).click();
  await expect(page.getByText('Together is better.')).toBeVisible();
 });
-test('giving stays available through More instead of occupying a tab',async ({page})=>{
- await page.getByRole('tab',{name:'More'}).click();
- await page.getByRole('button',{name:/^Giving/}).click();
+test('church original design places Giving in a primary tab',async ({page})=>{
+ await page.getByRole('tab',{name:'Give',exact:true}).click();
  await expect(page.getByText('Generosity, made simple.')).toBeVisible();
 });
 
 test('official church giving uses verified IBAN and external hosted checkout',async ({page})=>{
- await page.getByRole('tab',{name:'More',exact:true}).click();
- await page.getByRole('button',{name:/^Giving/}).click();
+ await page.getByRole('tab',{name:'Give',exact:true}).click();
  await expect(page.getByText('IE23 BOFI 9033 6590 5850 99')).toBeVisible();
  await expect(page.getByRole('button',{name:'Copy IBAN'})).toBeVisible();
  await page.getByRole('button',{name:'Online giving'}).click();
@@ -231,4 +233,26 @@ test('privacy erase removes Bible notes, faith progress, theme and reopens welco
  await page.getByRole('tab',{name:'More'}).click();
  await page.getByRole('button',{name:/Your faith journey/}).click();
  await expect(page.getByText('0 of 7 reflections marked complete')).toBeVisible();
+});
+
+test('church team home priority: service, giving, livestream, announcements and no social feed',async ({page})=>{
+ const labels=await page.getByRole('tab').allTextContents();
+ expect(labels.map(x=>x.trim())).toEqual(['Home','Watch','Events','Give','More']);
+ await expect(page.getByText('Welcome to Solid Rock',{exact:true})).toBeVisible();
+ await expect(page.getByText('Recent announcements')).toBeVisible();
+ await expect(page.getByText('Latest message')).toBeVisible();
+ await expect(page.getByText('This week')).toBeVisible();
+ for(const action of ['Give to Solid Rock','Events','Watch','Bible'])
+   await expect(page.getByRole('button',{name:action,exact:true})).toBeVisible();
+ await expect(page.getByText('From our community')).toHaveCount(0);
+ await expect(page.getByText('Grow at your own pace')).toHaveCount(0);
+ await page.getByRole('button',{name:'Give to Solid Rock'}).click();
+ await expect(page.getByText('Generosity, made simple.')).toBeVisible();
+});
+test('original church prototype information architecture keeps community in More',async ({page})=>{
+ await page.getByRole('tab',{name:'More'}).click();
+ for(const group of ['Grow','Community','My space','About & connect'])
+   await expect(page.getByText(group,{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Community conversations'}).click();
+ await expect(page.getByText('Together is better.')).toBeVisible();
 });
