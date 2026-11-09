@@ -1,0 +1,27 @@
+id,workstream,priority,deliverable,acceptance_evidence,owner,status
+ENG-001,Governance,P0,Nominate church product and engineering owners,Written owner register,Church sponsor,Proposed
+ENG-002,Source,P0,Clone branch and record SHA,Checkout and build logs,Mobile lead,Proposed
+ENG-003,Quality,P0,Run mobile admin and API tests,CI run linked to exact SHA,QA lead,Proposed
+ENG-004,Design,P0,Review church PDF and original prototype,Approved screen-by-screen comparison,Design owner,Proposed
+ENG-005,Brand,P0,Validate crest palette imagery and fonts,Approved brand and asset register,Design owner,Proposed
+ENG-006,Navigation,P0,Verify five primary tabs,Device screenshots and navigation tests,Mobile lead,Source implemented
+ENG-007,Home,P0,Prioritise notices live worship and giving,Church-approved home screenshots,Design owner,Source implemented
+ENG-008,Media,P0,Validate official YouTube streams and playback,Real Android and iOS playback logs,Media owner,Unverified native
+ENG-009,Content,P0,Replace demo records with approved facts,Church content approval record,Content owner,Proposed
+ENG-010,Giving,P0,Verify beneficiary and hosted checkout,Independent finance signoff,Treasurer,Pending
+ENG-011,Bible,P0,Verify WEB licence and fallback,Offline native Bible test,Mobile lead,Source implemented
+ENG-012,Privacy,P0,Test local data erasure,Device privacy test and screenshots,QA lead,Source implemented
+ENG-013,Accessibility,P0,Test VoiceOver TalkBack and dynamic type,Device accessibility report,QA lead,Pending
+ENG-014,Native,P0,Create signed internal Android and iOS builds,Build artifacts and identifiers,Mobile lead,Pending
+ENG-015,Identity,P1,Agree canonical profile and role model,Accepted architecture decision record,Backend lead,Blocked
+ENG-016,Database,P1,Reconcile both Supabase migration sets,Scratch DB tests and rollback plan,Backend lead,Blocked
+ENG-017,Security,P1,Prove RLS isolation and privilege denial,Independent security test evidence,Security lead,Pending
+ENG-018,Admin,P1,Verify staff content workflow,Staging editor publish rollback tests,Staff lead,Partial source
+ENG-019,Events,P1,Test capacity waitlist cancellation and check-in,Staging concurrency tests,Backend lead,Partial source
+ENG-020,Accounts,P1,Implement functional cloud account deletion,Approved end-to-end deletion test,Privacy lead,Blocked
+ENG-021,Notifications,P1,Test native push and opt-out,Device opt-in and delivery tests,Mobile lead,Pending
+ENG-022,Community,P2,Approve moderation and youth safeguarding,Written policy and staff rota,Safeguarding lead,Blocked
+ENG-023,Messaging,P2,Verify group channel privacy and reporting,Staging role and abuse tests,Backend lead,Blocked
+ENG-024,Pastoral,P2,Protect care requests and retention,Confidentiality and deletion tests,Pastoral lead,Blocked
+ENG-025,Stores,Release,Verify church-owned app identifiers and signing,Apple Google EAS ownership evidence,Publishing lead,Pending
+ENG-026,Release,Release,Complete church UAT and production signoff,Exact SHA signed acceptance,Product sponsor,Pending
