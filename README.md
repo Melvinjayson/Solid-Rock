@@ -1,5 +1,8 @@
 # Solid Rock Centre — Native Mobile Church Companion
 
+> **Church engineering team:** Start with the [Engineering hand-off guide](docs/ENGINEERING_TEAM_HANDOFF.md) and [editable build backlog](docs/handoff_engineering_backlog.csv). Clone branch `handoff/church-engineering-2026-11-09` for the church design-aligned implementation. This is a review baseline, not a production release.
+
+
 **Status:** Implemented source + browser/UAT preview on draft feature branch. **Not released to the App Store, Google Play or general church membership.**
 **Repository:** `Melvinjayson/Solid-Rock` · **Branch:** `feat/solid-rock-expo-mvp` · **Review:** [PR #2](https://github.com/Melvinjayson/Solid-Rock/pull/2).
 **Church source of truth:** [solidrockdublin.org](https://solidrockdublin.org/) · [Giving](https://solidrockdublin.org/give).
